@@ -149,12 +149,22 @@ void TableDelegate::init_table_type(Table *table, Json::Value &val, int robot)
         int ben_ji = 0;     //本鸡
         int wu_gu_ji = 0;   //乌骨鸡
         int bao_ji = 0;     //包鸡
-        int huan_san_zhang = 0;
+       // int huan_san_zhang = 0;
         int is_fang_ji = 0; //0不是翻鸡  1是翻鸡 2滚滚鸡
-        int is_lian_zhuang = 1; // 1，连庄 0，样样三
             //int substitute = 0;
-            int cost_select_flag = 1;
-        table->init_table_type(table_type, has_ghost, has_feng, hu_pair, horse_num, max_play_count, ping_hu_fang_pao, dead_double, cost_select_flag, ben_ji, wu_gu_ji, bao_ji, is_fang_ji, is_lian_zhuang, huan_san_zhang);
+        int cost_select_flag = 1;
+        int is_man_tang_ji = 1;
+
+        int jin_yin_ji = 0;  //金银鸡
+        int chui_feng_ji = 0;//吹风鸡
+        int xing_qi_ji = 0; //星期鸡
+        int shu_zi_ji = 0;   //数字鸡
+        int jian_qi_wa = 0;  //见七挖
+
+        int gui_yang = 1; //1贵阳  2 二丁 3 三丁
+        int lai_zi_ji = 0; //癞子鸡
+        int zha_jiao = 0; //扎鸟
+        table->init_table_type(table_type, has_ghost, has_feng, hu_pair, horse_num, max_play_count, ping_hu_fang_pao, dead_double, cost_select_flag, ben_ji, wu_gu_ji, bao_ji, is_fang_ji, is_man_tang_ji, jin_yin_ji, chui_feng_ji, xing_qi_ji, shu_zi_ji, jian_qi_wa, gui_yang, lai_zi_ji, zha_jiao );
     }
     else
     {
@@ -173,9 +183,19 @@ void TableDelegate::init_table_type(Table *table, Json::Value &val, int robot)
         int ben_ji = val["ben_ji"].asInt();                 //本鸡
         int wu_gu_ji = val["wu_gu_ji"].asInt();             //乌骨鸡
         int bao_ji = val["bao_ji"].asInt();                 //包鸡
-        int huan_san_zhang = val["huan_san_zhang"].asInt(); //换三张
+      //  int huan_san_zhang = val["huan_san_zhang"].asInt(); //换三张
         int is_fang_ji = val["is_fang_ji"].asInt();         //0不是翻鸡  1是翻鸡 2滚滚鸡
-        int is_lian_zhuang = val["is_lian_zhuang"].asInt(); //1，连庄   
+        int is_man_tang_ji = val["is_man_tang_ji"].asInt(); //1, 满堂鸡 2 手上鸡
+
+        int jin_yin_ji = val["jin_yin_ji"].asInt();  //金银鸡
+        int chui_feng_ji = val["chui_feng_ji"].asInt();//吹风鸡
+        int xing_qi_ji = val["xing_qi_ji"].asInt(); //星期鸡
+        int shu_zi_ji = val["shu_zi_ji"].asInt();   //数字鸡
+        int jian_qi_wa = val["jian_qi_wa"].asInt();  //见七挖
+
+        int gui_yang = val["gui_yang"].asInt(); //1贵阳  2 二丁 3 三丁
+        int lai_zi_ji = val["lai_zi_ji"].asInt(); //癞子鸡
+        int zha_jiao = val["zha_jiao"].asInt(); //扎鸟
         if (!val["forbid_same_ip"].isNull())
         {
             forbid_same_ip = val["forbid_same_ip"].asInt();
@@ -203,7 +223,7 @@ void TableDelegate::init_table_type(Table *table, Json::Value &val, int robot)
         }
 
         table->init_table_type(table_type, has_ghost, has_feng, hu_pair, horse_num, max_play_count, ping_hu_fang_pao, dead_double,
-                               forbid_same_ip, forbid_same_place, substitute, cost_select_flag, ben_ji, wu_gu_ji, bao_ji , is_fang_ji, is_lian_zhuang, huan_san_zhang);
+                               forbid_same_ip, forbid_same_place, substitute, cost_select_flag, ben_ji, wu_gu_ji, bao_ji , is_fang_ji, is_man_tang_ji, jin_yin_ji, chui_feng_ji, xing_qi_ji, shu_zi_ji, jian_qi_wa, gui_yang, lai_zi_ji, zha_jiao);
     }
 }
 

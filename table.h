@@ -41,8 +41,12 @@ enum JiType
     ZE_REN_JI = 6,           // 责任鸡
     JIN_JI = 7,              // 金鸡
     BAO_JI = 8,              // 包鸡
-    FANG_JI = 9,              //翻鸡
-	GUN_GUN_JI = 10,           //滚滚鸡
+    FANG_JI = 9,             //翻鸡
+    GUN_GUN_JI = 10,         //滚滚鸡
+    JIN_YIN_JI = 11,         //金银鸡
+    XING_QI_JI = 12,         //星期鸡
+    SHU_ZI_JI = 13,          //数字鸡
+    JIAN_QI_WA = 14,         //见七挖
 };
 
 struct ji_data
@@ -77,7 +81,11 @@ enum FenType
     FANG_JI_TYPE = 18,             //翻鸡
     GUN_GUN_JI_TYPE = 19,          //滚滚鸡
     YUAN_QUE_TYPE = 20,            //原缺
-    CHA_QUE_TYPE = 21,            //查缺
+    CHA_QUE_TYPE = 21,             //查缺
+    JIN_YIN_JI_TYPE = 22,          //金银鸡
+    XING_QI_JI_TYPE = 23,          //星期鸡
+    SHU_ZI_JI_TYPE = 24,           //数字鸡
+    JIAN_QI_WA_TYPE = 25,          //见七挖
 };
 
 typedef struct
@@ -118,9 +126,6 @@ typedef struct
 
     vector<int> obsorb_seats;    // 吃、碰、杠的座位号
     vector<int> gang_seats;      // 杠的人位置
-	int lack_suit;//丢弃的类型
-	int select_suit;//选取的牌的类型
-	int select_cards;//选取的牌
     vector<int> lian_gang_cards; // 连杠牌的记录
 
     double jingdu;
@@ -159,14 +164,11 @@ typedef struct
 
     std::map<int, std::map<int, int> > score_from_players_detail; //每个玩家，每得得分的去向
 
-    int zhong_ma_player; //-2表示是买马玩家， -1表示不是， 其它表示中马玩家的seatid
     Player *player;
     int already_get_red;
     int city_red_falg;
     int score; // 基础分(含特殊牌型翻倍)
 
-    std::vector<Card> change_cards;//交换的牌
-    int yuan_que;   //原缺
     void clear(void)
     {
         // enable = 0; // 手否激活
@@ -246,10 +248,6 @@ typedef struct
         score_from_players_detail.clear();
         hu_pai_lei_xing = "";
         get_next_card_cnt = 0;
-		lack_suit = -1;
-		select_suit = -1;
-        select_cards = 0;
-        yuan_que = 0;
     }
 
     void reset(void)
@@ -311,10 +309,6 @@ typedef struct
         score_from_players_detail.clear();
         hu_pai_lei_xing = "";
         get_next_card_cnt = 0;
-		lack_suit = -1;
-		select_suit = -1;
-		select_cards = 0;
-        yuan_que = 0;
     }
 } Seat;
 
@@ -384,17 +378,6 @@ class Table
     ev_timer subs_timer;
     ev_tstamp subs_timer_stamp;
 
-    ev_timer                    select_cards_start_timer;
-	ev_tstamp                   select_cards_start_stamp;
-
-	ev_timer                    select_cards_timer;
-	ev_tstamp                   select_cards_timer_stamp;
-
-	ev_timer                    lack_suit_start_timer;
-	ev_tstamp                   lack_suit_start_stamp;
-
-	ev_timer                    lack_suit_timer;
-	ev_tstamp                   lack_suit_stamp;
     //ev_timer                    single_ready_timer;
     //ev_tstamp                   single_ready_timer_stamp;
     int cur_flow_mode;
@@ -479,7 +462,6 @@ class Table
 
 
     int is_fang_ji;     //0：摇摆鸡  1：翻鸡  2:滚滚鸡
-    int is_lian_zhuang; //0: 样样三 1:连庄
     int huan_san_zhang; //换三张
 
     int is_re_pao;       //是否为热炮
@@ -507,8 +489,19 @@ class Table
     std::vector<int> redpackes;
     int red_type;
 
-    int select_card_flag;
-    int gang_shang_hu_flag;
+
+    int is_man_tang_ji; //1，满堂鸡  0 手上鸡
+    int jin_yin_ji;     //金银鸡
+    int chui_feng_ji;   //吹风鸡
+    int xing_qi_ji;     //星期鸡
+    int shu_zi_ji;      //数字鸡
+    int jian_qi_wa;     //见七挖
+    int gui_yang;       //1贵阳  2 二丁 3 三丁
+    int lai_zi_ji;      //癞子鸡
+    int zha_jiao;       //扎鸟
+
+
+    int xing_qi;        //记录单局开始时，是星期几
   public:
     Table();
     virtual ~Table();
@@ -517,7 +510,7 @@ class Table
 
     void init_table_type(int set_type, int set_has_ghost, int set_has_feng, int set_hu_pair, int set_horse_num,
                          int set_max_borad, int set_fang_pao = 0, int set_dead_double = 1, int set_forbid_same_ip = 0,
-                         int set_forbid_same_place = 0, int set_substitute = 0, int set_cost_select_flag = 1, int set_ben_ji = 0, int set_wu_gu_ji = 0, int set_bao_ji = 0, int set_is_fang_ji = 0, int set_is_lian_zhuang = 1, int set_huan_san_zhang = 0);
+                         int set_forbid_same_place = 0, int set_substitute = 0, int set_cost_select_flag = 1, int set_ben_ji = 0, int set_wu_gu_ji = 0, int set_bao_ji = 0, int set_is_fang_ji = 0, int set_is_man_tang_ji = 1,int set_jin_yin_ji = 0,int set_chui_feng_ji = 0,int set_xing_qi_ji = 0,int set_shu_zi_ji = 0,int set_jian_qi_wa = 0,int set_gui_yang = 1,int set_lai_zi_ji = 0,int set_zha_jiao = 0);
     int set_card_ratio(int my_is_stack, int my_card_ratio_danpai, int my_card_ratio_duizi, int my_card_ratio_shunzi,
                        int my_card_ratio_jinhua, int my_card_ratio_shunjin, int my_card_ratio_baozi);
     int get_card_type(int salt);
@@ -672,21 +665,6 @@ class Table
 
     int next_player_seatid_of(int cur_player);
     int pre_player_seatid_of(int cur_player);
-
-	static void select_cards_timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents);
-	static void select_cards_start_timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents);
-
-	static void lack_suit_timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents);
-	static void lack_suit_start_timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents);
-
-	void handler_select_cards_start();
-	void handler_lack_suit_start();
-
-	void handler_select_cards_end();
-    void handler_lack_suit_end();  
-    
-    void handler_select_cards(Player* player);
-	void handler_lack_suit(Player* player);
 };
 
 #endif
