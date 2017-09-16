@@ -86,6 +86,7 @@ enum FenType
     XING_QI_JI_TYPE = 23,          //星期鸡
     SHU_ZI_JI_TYPE = 24,           //数字鸡
     JIAN_QI_WA_TYPE = 25,          //见七挖
+    ZHA_NIAO_TYPE = 26,            //扎鸟
 };
 
 typedef struct
@@ -498,7 +499,7 @@ class Table
     int jian_qi_wa;     //见七挖
     int gui_yang;       //1贵阳  2 二丁 3 三丁
     int lai_zi_ji;      //癞子鸡
-    int zha_jiao;       //扎鸟
+    int zha_niao;       //扎鸟
 
 
     int xing_qi;        //记录单局开始时，是星期几
@@ -510,7 +511,7 @@ class Table
 
     void init_table_type(int set_type, int set_has_ghost, int set_has_feng, int set_hu_pair, int set_horse_num,
                          int set_max_borad, int set_fang_pao = 0, int set_dead_double = 1, int set_forbid_same_ip = 0,
-                         int set_forbid_same_place = 0, int set_substitute = 0, int set_cost_select_flag = 1, int set_ben_ji = 0, int set_wu_gu_ji = 0, int set_bao_ji = 0, int set_is_fang_ji = 0, int set_is_man_tang_ji = 1,int set_jin_yin_ji = 0,int set_chui_feng_ji = 0,int set_xing_qi_ji = 0,int set_shu_zi_ji = 0,int set_jian_qi_wa = 0,int set_gui_yang = 1,int set_lai_zi_ji = 0,int set_zha_jiao = 0, int set_is_lian_zhuang);
+                         int set_forbid_same_place = 0, int set_substitute = 0, int set_cost_select_flag = 1, int set_ben_ji = 0, int set_wu_gu_ji = 0, int set_bao_ji = 0, int set_is_fang_ji = 0, int set_is_man_tang_ji = 1,int set_jin_yin_ji = 0,int set_chui_feng_ji = 0,int set_xing_qi_ji = 0,int set_shu_zi_ji = 0,int set_jian_qi_wa = 0,int set_gui_yang = 1,int set_lai_zi_ji = 0,int set_zha_niao = 0, int set_is_lian_zhuang);
     int set_card_ratio(int my_is_stack, int my_card_ratio_danpai, int my_card_ratio_duizi, int my_card_ratio_shunzi,
                        int my_card_ratio_jinhua, int my_card_ratio_shunjin, int my_card_ratio_baozi);
     int get_card_type(int salt);

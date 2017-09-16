@@ -164,8 +164,8 @@ void TableDelegate::init_table_type(Table *table, Json::Value &val, int robot)
 
         int gui_yang = 1; //1贵阳  2 二丁 3 三丁
         int lai_zi_ji = 0; //癞子鸡
-        int zha_jiao = 0; //扎鸟
-        table->init_table_type(table_type, has_ghost, has_feng, hu_pair, horse_num, max_play_count, ping_hu_fang_pao, dead_double, cost_select_flag, ben_ji, wu_gu_ji, bao_ji, is_fang_ji, is_man_tang_ji, jin_yin_ji, chui_feng_ji, xing_qi_ji, shu_zi_ji, jian_qi_wa, gui_yang, lai_zi_ji, zha_jiao , is_lian_zhuang);
+        int zha_niao = 0; //扎鸟
+        table->init_table_type(table_type, has_ghost, has_feng, hu_pair, horse_num, max_play_count, ping_hu_fang_pao, dead_double, cost_select_flag, ben_ji, wu_gu_ji, bao_ji, is_fang_ji, is_man_tang_ji, jin_yin_ji, chui_feng_ji, xing_qi_ji, shu_zi_ji, jian_qi_wa, gui_yang, lai_zi_ji, zha_niao , is_lian_zhuang);
     }
     else
     {
@@ -196,7 +196,7 @@ void TableDelegate::init_table_type(Table *table, Json::Value &val, int robot)
 
         int gui_yang = val["gui_yang"].asInt(); //1贵阳  2 二丁 3 三丁
         int lai_zi_ji = val["lai_zi_ji"].asInt(); //癞子鸡
-        int zha_jiao = val["zha_jiao"].asInt(); //扎鸟
+        int zha_niao = val["zha_niao"].asInt(); //扎鸟
         int is_lian_zhuang = val["is_lian_zhuang"].asInt();
         if (!val["forbid_same_ip"].isNull())
         {
@@ -225,7 +225,7 @@ void TableDelegate::init_table_type(Table *table, Json::Value &val, int robot)
         }
 
         table->init_table_type(table_type, has_ghost, has_feng, hu_pair, horse_num, max_play_count, ping_hu_fang_pao, dead_double,
-                               forbid_same_ip, forbid_same_place, substitute, cost_select_flag, ben_ji, wu_gu_ji, bao_ji , is_fang_ji, is_man_tang_ji, jin_yin_ji, chui_feng_ji, xing_qi_ji, shu_zi_ji, jian_qi_wa, gui_yang, lai_zi_ji, zha_jiao, is_lian_zhuang);
+                               forbid_same_ip, forbid_same_place, substitute, cost_select_flag, ben_ji, wu_gu_ji, bao_ji , is_fang_ji, is_man_tang_ji, jin_yin_ji, chui_feng_ji, xing_qi_ji, shu_zi_ji, jian_qi_wa, gui_yang, lai_zi_ji, zha_niao, is_lian_zhuang);
     }
 }
 

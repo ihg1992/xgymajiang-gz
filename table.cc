@@ -201,7 +201,7 @@ void Table::init_table_type(int set_type, int set_has_ghost, int set_has_feng, i
                             int set_max_board, int set_fang_pao, int set_dead_double, int set_forbid_same_ip,
                             int set_forbid_same_place, int set_substitute, int set_cost_select_flag, int set_ben_ji, int set_wu_gu_ji, int set_bao_ji,
                             int set_is_fang_ji, int set_is_man_tang_ji,int set_jin_yin_ji,int set_chui_feng_ji,int set_xing_qi_ji,
-                            int set_shu_zi_ji,int set_jian_qi_wa,int set_gui_yang,int set_lai_zi_ji,int set_zha_jiao, int set_is_lian_zhuang)
+                            int set_shu_zi_ji,int set_jian_qi_wa,int set_gui_yang,int set_lai_zi_ji,int set_zha_niao, int set_is_lian_zhuang)
 {
     type = set_type;
     has_ghost = set_has_ghost;
@@ -233,7 +233,7 @@ void Table::init_table_type(int set_type, int set_has_ghost, int set_has_feng, i
     jian_qi_wa = set_jian_qi_wa;         //见七挖
     gui_yang = set_gui_yang;             //1贵阳  2 二丁 3 三丁
     lai_zi_ji = set_lai_zi_ji;           //癞子鸡
-    zha_jiao = set_zha_jiao;             //扎鸟
+    zha_niao = set_zha_niao;             //扎鸟
 	is_lian_zhuang = set_is_lian_zhuang;  //连庄
 	if( gui_yang == 1 )
 		seat_max = 4;
@@ -5751,7 +5751,125 @@ void Table::update_account_bet()
         mjlog.debug("-----------------------------------------------\n");
     }
 
+    //扎鸟计算
+    if (zha_niao == 1 &&  deck.horse_cards.size() > 0)
+    {
+        int niao_value = deck.horse_cards[0].value % 16;
+        int zhong_niao_seat = win_seatid;
+        for (int i = 1; i < niao_value; i++)
+        {
+            zhong_niao_seat = next_player_seatid_of(zhong_niao_seat);
+            }
+        }
 
+        //种鸟玩家的分翻倍
+        if (score_from_players_total[zhong_niao_seat] >= 0)
+        {
+            score_from_players_item_total[zhong_niao_seat][ZHA_NIAO_TYPE] = score_from_players_total[zhong_niao_seat];
+            score_from_players_item_count[zhong_niao_seat][ZHA_NIAO_TYPE]++;
+            mjlog.debug("zhong niao player[%d] jin fen player[%d] jin fen type[%d] jin fen[%d]\n", zhong_niao_seat, zhong_niao_seat, ZHA_NIAO_TYPE, score_from_players_total[zhong_niao_seat]);
+        }
+        else
+        {
+            score_to_players_item_total[zhong_niao_seat][ZHA_NIAO_TYPE] = score_from_players_total[zhong_niao_seat];
+            score_to_players_item_count[zhong_niao_seat][ZHA_NIAO_TYPE]++;
+            mjlog.debug("zhong niao player[%d] chu fen player[%d] chu fen type[%d] chu fen[%d]\n", zhong_niao_seat, zhong_niao_seat, ZHA_NIAO_TYPE, score_from_players_total[zhong_niao_seat]);
+        }
+        score_from_players_total[zhong_niao_seat] *= 2;
+
+        if ( zhong_niao_seat == win_seatid )
+        { //赢家种鸟，分数都翻倍
+            mjlog.debug("ying jia zhong niao!\n");
+            int tmp_zhong_niao_seat = zhong_niao_seat;
+            for (int i = 0; i < max_ready_players - 1; ++i)
+            {
+                tmp_zhong_niao_seat = next_player_seatid_of(tmp_zhong_niao_seat);
+                if (score_from_players_total[tmp_zhong_niao_seat] >= 0)
+                {
+                    score_from_players_item_total[tmp_zhong_niao_seat][ZHA_NIAO_TYPE] = score_from_players_total[tmp_zhong_niao_seat];
+                    score_from_players_item_count[tmp_zhong_niao_seat][ZHA_NIAO_TYPE]++;
+                    mjlog.debug("zhong niao player[%d] jin fen player[%d] jin fen type[%d] jin fen[%d]\n", zhong_niao_seat, tmp_zhong_niao_seat, ZHA_NIAO_TYPE, score_from_players_total[tmp_zhong_niao_seat]);
+                }
+                else
+                {
+                    score_to_players_item_total[tmp_zhong_niao_seat][ZHA_NIAO_TYPE] = score_from_players_total[tmp_zhong_niao_seat];
+                    score_to_players_item_count[tmp_zhong_niao_seat][ZHA_NIAO_TYPE]++;
+                    mjlog.debug("zhong niao player[%d] chu fen player[%d] chu fen type[%d] chu fen[%d]\n", zhong_niao_seat, tmp_zhong_niao_seat, ZHA_NIAO_TYPE, score_from_players_total[tmp_zhong_niao_seat]);
+                }
+                score_from_players_total[tmp_zhong_niao_seat] *= 2;
+            }
+        }
+        else
+        {
+            mjlog.debug("shu jia zhong niao!\n");
+            //找到中鸟玩家多加的鸟分来源
+            //中鸟玩家加的分，从其它玩家减去
+            map<int, map<int, int>>::iterator ite = seats[zhong_niao_seat].score_from_players_detail.begin();
+            for (; ite != seats[zhong_niao_seat].score_from_players_detail.end(); ite++)
+            {
+                int first_value = ite->first;
+                map<int, int> second_value = ite->second;
+
+                map<int, int>::iterator inner_ite = second_value.begin();
+                for (; inner_ite != second_value.end(); inner_ite++)
+                {
+                    if (first_value == -1)
+                    {
+                        for (int k = 0; k < seat_max; k++)
+                        {
+                            if (seats[k].ready != 1 || k == zhong_niao_seat)
+                                continue;
+                            score_from_players_total[k] -= second_value[inner_ite->first] / (max_ready_players - 1);
+                            score_to_players_item_total[k][ZHA_NIAO_TYPE] += second_value[inner_ite->first];
+                            score_to_players_item_count[k][ZHA_NIAO_TYPE] = 1;
+                            mjlog.debug("zhong niao player[%d] chu fen player[%d] chu fen type[%d] chu fen[%d]\n", zhong_niao_seat, k, inner_ite->first, second_value[inner_ite->first]);
+                        }
+                    }
+                    else
+                    {
+                        score_from_players_total[first_value] -= second_value[inner_ite->first];
+                        score_to_players_item_total[first_value][ZHA_NIAO_TYPE] += second_value[inner_ite->first];
+                        score_to_players_item_count[first_value][ZHA_NIAO_TYPE] = 1;
+                        mjlog.debug("zhong niao player[%d] chu fen player[%d] chu fen type[%d] chu fen[%d]\n", zhong_niao_seat, first_value, inner_ite->first, second_value[inner_ite->first]);
+                    }
+                }
+            }
+
+            //中鸟减的分，从其它玩家中加回去
+            for (int j = 0; j < seat_max; j++)
+            {
+                if (seats[j].ready != 1 || zhong_niao_seat == j)
+                {
+                    continue;
+                }
+                map<int, map<int, int>>::iterator ite = seats[j].score_from_players_detail.begin();
+                for (; ite != seats[j].score_from_players_detail.end(); ite++)
+                {
+                    int first_value = ite->first;
+                    map<int, int> second_value = ite->second;
+
+                    map<int, int>::iterator inner_ite = second_value.begin();
+                    for (; inner_ite != second_value.end(); inner_ite++)
+                    {
+                        if (first_value == zhong_niao_seat)
+                        {
+                            score_from_players_total[j] += second_value[inner_ite->first];
+                            score_from_players_item_count[j][ZHA_NIAO_TYPE] = 1;
+                            score_from_players_item_total[j][ZHA_NIAO_TYPE] += second_value[inner_ite->first];
+                            mjlog.debug("zhong niao player[%d] jin fen player[%d] jin fen type[%d] jin fen[%d]\n", zhong_niao_seat, j, inner_ite->first, second_value[inner_ite->first]);
+                        }
+                        else if (first_value == -1)
+                        {
+                            score_from_players_total[j] += second_value[inner_ite->first] / (max_ready_players - 1);
+                            score_from_players_item_count[j][ZHA_NIAO_TYPE] = 1;
+                            score_from_players_item_total[j][ZHA_NIAO_TYPE] += second_value[inner_ite->first] / (max_ready_players - 1);
+                            mjlog.debug("zhong niao player[%d] jin fen player[%d] jin fen type[%d] jin fen[%d], max_ready_players[%d]\n", zhong_niao_seat, j, inner_ite->first, second_value[inner_ite->first] / (max_ready_players - 1), max_ready_players);
+                        }
+                    }
+                }
+            }
+        }
+    }
     //计算bet值
     for (int i = 0; i < seat_max; i++)
     {
