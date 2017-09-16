@@ -201,7 +201,7 @@ void Table::init_table_type(int set_type, int set_has_ghost, int set_has_feng, i
                             int set_max_board, int set_fang_pao, int set_dead_double, int set_forbid_same_ip,
                             int set_forbid_same_place, int set_substitute, int set_cost_select_flag, int set_ben_ji, int set_wu_gu_ji, int set_bao_ji,
                             int set_is_fang_ji, int set_is_man_tang_ji,int set_jin_yin_ji,int set_chui_feng_ji,int set_xing_qi_ji,
-                            int set_shu_zi_ji,int set_jian_qi_wa,int set_gui_yang,int set_lai_zi_ji,int set_zha_jiao)
+                            int set_shu_zi_ji,int set_jian_qi_wa,int set_gui_yang,int set_lai_zi_ji,int set_zha_jiao, int set_is_lian_zhuang)
 {
     type = set_type;
     has_ghost = set_has_ghost;
@@ -234,7 +234,7 @@ void Table::init_table_type(int set_type, int set_has_ghost, int set_has_feng, i
     gui_yang = set_gui_yang;             //1贵阳  2 二丁 3 三丁
     lai_zi_ji = set_lai_zi_ji;           //癞子鸡
     zha_jiao = set_zha_jiao;             //扎鸟
-	
+	is_lian_zhuang = set_is_lian_zhuang;  //连庄
 	if( gui_yang == 1 )
 		seat_max = 4;
 	else if( gui_yang == 2)
@@ -4761,7 +4761,7 @@ void Table::update_account_bet()
                 score_to_players_item_count[pao_hu_seat][PAO_HU_TYPE]++;
 
                 mjlog.debug("seatid[%d] lian_zhuang_cnt %d\n", i, seats[i].lian_zhuang_cnt);
-                if (seats[i].lian_zhuang_cnt > 1 )//连庄分
+                if (seats[i].lian_zhuang_cnt > 1 && is_lian_zhuang)//连庄分
                 {
                     seats[i].score_from_players_detail[pao_hu_seat][LIAN_ZHUANG_TYPE] = score * (seats[i].lian_zhuang_cnt - 1);
                     score_from_players_item_count[i][LIAN_ZHUANG_TYPE] = seats[i].lian_zhuang_cnt - 1;
@@ -4794,7 +4794,7 @@ void Table::update_account_bet()
                 score_from_players_item_count[i][GANG_HU_TYPE]++;
                 score_to_players_item_count[gang_hu_seat][GANG_HU_TYPE]++;
 
-                if (seats[i].lian_zhuang_cnt > 1) //连庄分
+                if (seats[i].lian_zhuang_cnt > 1 && is_lian_zhuang) //连庄分
                 {
                     seats[i].score_from_players_detail[gang_hu_seat][LIAN_ZHUANG_TYPE] = score * (seats[i].lian_zhuang_cnt - 1);
                     score_from_players_item_count[i][LIAN_ZHUANG_TYPE] = seats[i].lian_zhuang_cnt - 1;
@@ -4831,7 +4831,7 @@ void Table::update_account_bet()
                 else
                     seats[i].score_from_players_detail[-1][ZI_MO_TYPE] = (max_ready_players - 1) * score;
 
-                if (seats[i].lian_zhuang_cnt > 1 ) //连庄分
+                if (seats[i].lian_zhuang_cnt > 1 && is_lian_zhuang) //连庄分
                 {
                     score_from_players_item_count[i][LIAN_ZHUANG_TYPE] = seats[i].lian_zhuang_cnt - 1;
                     if (gang_shang_hua_seat >= 0)
@@ -4850,7 +4850,7 @@ void Table::update_account_bet()
                 {
                     score_to_players_item_count[gang_shang_hua_seat][ZI_MO_TYPE] = 1;
 
-                    if (seats[win_seatid].lian_zhuang_cnt > 1 ) //连庄分
+                    if (seats[win_seatid].lian_zhuang_cnt > 1 && is_lian_zhuang) //连庄分
                     {
                         score_to_players_item_count[gang_shang_hua_seat][LIAN_ZHUANG_TYPE]++;
                     }
@@ -4859,7 +4859,7 @@ void Table::update_account_bet()
                 {
                     score_to_players_item_count[i][ZI_MO_TYPE]++;
 
-                    if (seats[win_seatid].lian_zhuang_cnt > 1) //连庄分
+                    if (seats[win_seatid].lian_zhuang_cnt > 1 && is_lian_zhuang) //连庄分
                     {
                         score_to_players_item_count[i][LIAN_ZHUANG_TYPE]++;
                     }
