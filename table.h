@@ -503,6 +503,7 @@ class Table
 
 
     int xing_qi;        //记录单局开始时，是星期几
+    Card trun_card;
   public:
     Table();
     virtual ~Table();
@@ -511,7 +512,7 @@ class Table
 
     void init_table_type(int set_type, int set_has_ghost, int set_has_feng, int set_hu_pair, int set_horse_num,
                          int set_max_borad, int set_fang_pao = 0, int set_dead_double = 1, int set_forbid_same_ip = 0,
-                         int set_forbid_same_place = 0, int set_substitute = 0, int set_cost_select_flag = 1, int set_ben_ji = 0, int set_wu_gu_ji = 0, int set_bao_ji = 0, int set_is_fang_ji = 0, int set_is_man_tang_ji = 1,int set_jin_yin_ji = 0,int set_chui_feng_ji = 0,int set_xing_qi_ji = 0,int set_shu_zi_ji = 0,int set_jian_qi_wa = 0,int set_gui_yang = 1,int set_lai_zi_ji = 0,int set_zha_niao = 0, int set_is_lian_zhuang);
+                         int set_forbid_same_place = 0, int set_substitute = 0, int set_cost_select_flag = 1, int set_ben_ji = 0, int set_wu_gu_ji = 0, int set_bao_ji = 0, int set_is_fang_ji = 0, int set_is_man_tang_ji = 1,int set_jin_yin_ji = 0,int set_chui_feng_ji = 0,int set_xing_qi_ji = 0,int set_shu_zi_ji = 0,int set_jian_qi_wa = 0,int set_gui_yang = 1,int set_lai_zi_ji = 0,int set_zha_niao = 0, int set_is_lian_zhuang = 0);
     int set_card_ratio(int my_is_stack, int my_card_ratio_danpai, int my_card_ratio_duizi, int my_card_ratio_shunzi,
                        int my_card_ratio_jinhua, int my_card_ratio_shunjin, int my_card_ratio_baozi);
     int get_card_type(int salt);
