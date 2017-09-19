@@ -169,6 +169,7 @@ typedef struct
     int already_get_red;
     int city_red_falg;
     int score; // 基础分(含特殊牌型翻倍)
+    vector<int> set_hole_cards;
 
     void clear(void)
     {
@@ -249,6 +250,7 @@ typedef struct
         score_from_players_detail.clear();
         hu_pai_lei_xing = "";
         get_next_card_cnt = 0;
+        set_hole_cards.clear();
     }
 
     void reset(void)
@@ -310,6 +312,7 @@ typedef struct
         score_from_players_detail.clear();
         hu_pai_lei_xing = "";
         get_next_card_cnt = 0;
+        set_hole_cards.clear();
     }
 } Seat;
 
@@ -667,6 +670,7 @@ class Table
 
     int next_player_seatid_of(int cur_player);
     int pre_player_seatid_of(int cur_player);
+    int get_set_hole_cards(Player *player);
 };
 
 #endif
