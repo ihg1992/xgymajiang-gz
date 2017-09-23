@@ -170,7 +170,7 @@ typedef struct
     int city_red_falg;
     int score; // 基础分(含特殊牌型翻倍)
     vector<int> set_hole_cards;
-
+    vector<int> peng_gang_bu_ji_fen_value;
     void clear(void)
     {
         // enable = 0; // 手否激活
@@ -251,6 +251,7 @@ typedef struct
         hu_pai_lei_xing = "";
         get_next_card_cnt = 0;
         set_hole_cards.clear();
+        peng_gang_bu_ji_fen_value.clear();
     }
 
     void reset(void)
@@ -313,6 +314,7 @@ typedef struct
         hu_pai_lei_xing = "";
         get_next_card_cnt = 0;
         set_hole_cards.clear();
+        peng_gang_bu_ji_fen_value.clear();
     }
 } Seat;
 
