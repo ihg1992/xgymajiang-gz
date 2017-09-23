@@ -662,15 +662,35 @@ int Table::handler_table_info(Player *player)
     packet.val["wu_gu_ji"] = wu_gu_ji;
     packet.val["is_fang_ji"] = is_fang_ji;
     packet.val["is_lian_zhuang"] = is_lian_zhuang;
-    //packet.val["cost_select_flag"] = cost_select_flag;
-    if (has_ghost == 1)
+
+    packet.val["is_man_tang_ji"] = is_man_tang_ji; //1, 满堂鸡 2 手上鸡
+
+    packet.val["jin_yin_ji"] = jin_yin_ji;     //金银鸡
+    packet.val["chui_feng_ji"] = chui_feng_ji; //吹风鸡
+    packet.val["xing_qi_ji"] = xing_qi_ji;     //星期鸡
+    packet.val["shu_zi_ji"] = shu_zi_ji;       //数字鸡
+    packet.val["jian_qi_wa"] = jian_qi_wa;     //见七挖
+
+    packet.val["gui_yang"] = gui_yang;   //1贵阳  2 二丁 3 三丁
+    packet.val["lai_zi_ji"] = lai_zi_ji; //癞子鸡
+    packet.val["zha_niao"] = zha_niao;   //扎鸟
+    if (lai_zi_ji == 1)
     {
-        packet.val["ghost_card"] = Card::ZhongV;
+        packet.val["ghost_card"] = trun_card.value; //鬼牌
     }
     else
     {
-        packet.val["ghost_card"] = 0;
+        packet.val["ghost_card"] = 0; //鬼牌
     }
+    //packet.val["cost_select_flag"] = cost_select_flag;
+    // if (has_ghost == 1)
+    // {
+    //     packet.val["ghost_card"] = Card::ZhongV;
+    // }
+    // else
+    // {
+    //     packet.val["ghost_card"] = 0;
+    // }
     packet.val["trun_card"] = 0;
 
     packet.val["tian_hu_flag"] = tian_hu_flag;               //天胡
@@ -1167,6 +1187,19 @@ int Table::game_start()
 			get_set_hole_cards(player);
 		}
         Jpacket packet;
+        for (int j = 0; j < seat_max; j++)
+        {
+            Seat &seat = seats[j];
+            Player *player = seat.player;
+            if (seat.ready == 0)
+            {
+                continue;
+            }
+            packet.val["uids"].append(player->uid);
+            packet.val["seats"].append(player->seatid);
+            packet.val["names"].append(player->name);
+            packet.val["sexs"].append(player->sex);
+        }
         packet.val["cmd"] = SERVER_GAME_START_BC;
         packet.val["uid"] = player->uid;
         packet.val["seatid"] = player->seatid;
