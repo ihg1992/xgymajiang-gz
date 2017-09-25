@@ -509,6 +509,7 @@ class Table
 
     int xing_qi;        //记录单局开始时，是星期几
     Card trun_card;
+    Json::Value config_of_replay; //配置
   public:
     Table();
     virtual ~Table();
@@ -631,16 +632,6 @@ class Table
     double GetDistance(double dLongitude1, double dLatitude1, double dLongitude2, double dLatitude2);
 
     void handler_voice_req(Player *player);
-
-    void handler_recored_mo(int value, int seat, int other);
-    void handler_recored_chi(int value, int pattern[3], int seat, int other);
-    void handler_recored_peng(int value, int seat, int other);
-    void handler_recored_gang(int value, int seat, int other, int gang_flag);
-    void handler_recored_guo(int value, int seat, int other);
-    void handler_recored_hu(int value, int seat, int other);
-    void handler_record_chu(int value, int seat);
-    void handler_record_horse(int seatid);
-    void handler_record_notice(int seatid);
 
     void handler_start_game_req(Player *player);
     void broadcast_ahead_start_status(Player *player, int flag);

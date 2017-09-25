@@ -139,7 +139,7 @@ void TableDelegate::init_table_type(Table *table, Json::Value &val, int robot)
     if (robot == 1)
     {
         int has_feng = 0;
-        int has_ghost = 0;
+        int has_ghost = 1;
         int horse_num = 4;
         int table_type = zjh.conf["tables"]["type"].asInt();
         int hu_pair = 1;
@@ -170,7 +170,7 @@ void TableDelegate::init_table_type(Table *table, Json::Value &val, int robot)
     else
     {
         int has_feng = 0;
-        int has_ghost = 0;
+        int has_ghost = 1;
         int horse_num = val["horse_num"].asInt();
         int table_type = zjh.conf["tables"]["type"].asInt();
         int hu_pair = 1;
@@ -224,6 +224,7 @@ void TableDelegate::init_table_type(Table *table, Json::Value &val, int robot)
             substitute = val["substitute"].asInt();
         }
 
+        table->config_of_replay = val;
         table->init_table_type(table_type, has_ghost, has_feng, hu_pair, horse_num, max_play_count, ping_hu_fang_pao, dead_double,
                                forbid_same_ip, forbid_same_place, substitute, cost_select_flag, ben_ji, wu_gu_ji, bao_ji , is_fang_ji, is_man_tang_ji, jin_yin_ji, chui_feng_ji, xing_qi_ji, shu_zi_ji, jian_qi_wa, gui_yang, lai_zi_ji, zha_niao, is_lian_zhuang);
     }

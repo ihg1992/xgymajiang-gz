@@ -1112,6 +1112,8 @@ int Table::game_start()
 {
     ev_timer_stop(zjh.loop, &subs_timer);
     ts = time(NULL);
+    replay.init(ts, tid); //记录回放
+    replay.append_record(config_of_replay);
     state = BETTING;
     mjlog.debug("game start.\n");
     cur_flow_mode = zjh.game->flow_mode;
@@ -1163,7 +1165,7 @@ int Table::game_start()
         ev_timer_set(&start_timer, START_TIME_OUT, START_TIME_OUT);
     }
 
-    replay.init(ts, ttid);
+    // replay.init(ts, ttid);
     init_dealer();
     hu_seat = -1;
     pao_hu_seat = -1;
@@ -1235,38 +1237,39 @@ int Table::game_start()
         vector_to_json_array(seat.hole_cards.cards, packet, "holes");
         packet.end();
         unicast(player, packet.tostring());
+        replay.append_record(packet.tojson());
         next = next_betting_seat(next);
     }
 
-    StartRecord record;
-    memset(&replay.start_record, 0, sizeof(StartRecord));
-    replay.start_record.tid = ttid;
-    replay.start_record.type = type;
-    replay.start_record.owner_uid = owner_uid;
-    replay.start_record.dealer = MBYTE(dealer);
-    for (int i = 0; i < seat_max; i++)
-    {
-        Seat &seat = seats[i];
-        if (seats[i].ready != 1)
-        {
-            continue;
-        }
-        replay.start_record.uids[i] = seat.uid;
-        snprintf(replay.start_record.name[i], sizeof(record.name[i]), "%s", seat.player->name.c_str());
-        for (int j = 0; j < seat.hole_cards.size(); j++)
-        {
-            replay.start_record.holes[i][j] = MBYTE(seat.hole_cards.cards[j].value);
-        }
-    }
+    // StartRecord record;
+    // memset(&replay.start_record, 0, sizeof(StartRecord));
+    // replay.start_record.tid = ttid;
+    // replay.start_record.type = type;
+    // replay.start_record.owner_uid = owner_uid;
+    // replay.start_record.dealer = MBYTE(dealer);
+    // for (int i = 0; i < seat_max; i++)
+    // {
+    //     Seat &seat = seats[i];
+    //     if (seats[i].ready != 1)
+    //     {
+    //         continue;
+    //     }
+    //     replay.start_record.uids[i] = seat.uid;
+    //     snprintf(replay.start_record.name[i], sizeof(record.name[i]), "%s", seat.player->name.c_str());
+    //     for (int j = 0; j < seat.hole_cards.size(); j++)
+    //     {
+    //         replay.start_record.holes[i][j] = MBYTE(seat.hole_cards.cards[j].value);
+    //     }
+    // }
 
-    Config config;
-    config.horse_num = MBYTE(horse_num);
-    config.max_play_count = MBYTE(max_play_board);
-    config.fang_pao = MBYTE(fang_pao);
-    config.dead_double = MBYTE(dead_double);
-    config.forbid_same_ip = MBYTE(forbid_same_ip);
-    config.forbid_same_place = MBYTE(forbid_same_place);
-    memcpy((void *)&(replay.start_record.config), &config, sizeof(config));
+    // Config config;
+    // config.horse_num = MBYTE(horse_num);
+    // config.max_play_count = MBYTE(max_play_board);
+    // config.fang_pao = MBYTE(fang_pao);
+    // config.dead_double = MBYTE(dead_double);
+    // config.forbid_same_ip = MBYTE(forbid_same_ip);
+    // config.forbid_same_place = MBYTE(forbid_same_place);
+    // memcpy((void *)&(replay.start_record.config), &config, sizeof(config));
 
     start_seat = cur_seat = dealer;
 
@@ -1349,12 +1352,12 @@ int Table::start_next_bet(int flag)
             Seat &tseat = seats[i];
             if (tseat.pao_hu_flag == 1)
             {
-                handler_recored_hu(hu_card, i, pao_hu_seat);
+                // handler_recored_hu(hu_card, i, pao_hu_seat);
             }
 
             if (tseat.gang_hu_flag == 1)
             {
-                handler_recored_hu(hu_card, i, gang_hu_seat);
+                // handler_recored_hu(hu_card, i, gang_hu_seat);
             }
         }
         game_end();
@@ -1464,7 +1467,7 @@ int Table::start_next_bet(int flag)
             }
             seat.get_next_card_cnt++;
 
-            handler_recored_mo(seat.hole_cards.last_card.value, seat.seatid, -1);
+            // handler_recored_mo(seat.hole_cards.last_card.value, seat.seatid, -1);
             seat.guo_hu_cards.clear();
             seat.guo_peng_cards.clear();
             dump_hole_cards(seat.hole_cards.cards, cur_seat, 4);
@@ -1574,6 +1577,7 @@ int Table::start_next_bet(int flag)
 
     packet.end();
     unicast(seat.player, packet.tostring());
+    replay.append_record(packet.tojson());
 
     Jpacket packet1;
     packet1.val["cmd"] = SERVER_NEXT_BET_BC;
@@ -1589,11 +1593,12 @@ int Table::start_next_bet(int flag)
     }
     packet1.end();
     broadcast(seat.player, packet1.tostring());
+    replay.append_record(packet1.tojson());
 
     if (actions[NOTICE_CHI] == 1 || actions[NOTICE_PENG] == 1 || actions[NOTICE_GANG] == 1 ||
         actions[NOTICE_HU] == 1 || actions[NOTICE_GUO] == 1)
     {
-        handler_record_notice(cur_seat);
+        // handler_record_notice(cur_seat);
     }
 
     if (seat.robot_flag == 1 || (seat.ting == 1 && actions[NOTICE_HU] != 1))
@@ -2097,7 +2102,7 @@ int Table::game_end(int flag)
 
                 if (seats[i].ji_pai.size() > 0)
                 {
-                    handler_record_horse(i);
+                    // handler_record_horse(i);
                     vector_to_json_array(seats[i].ji_pai, packet.val["players"][j], "horse_cards", "horse_type"); //算出来的鸡牌值,和类型
                     //vector_to_json_array(seats[i].ji_pai.type, packet.val["players"][j], "horse_cards"); //算出来的鸡牌类型
                     vector_to_json_array(seats[i].zhong_horse, packet.val["players"][j], "zhong_horse");
@@ -2255,11 +2260,14 @@ int Table::game_end(int flag)
     }
     packet.end();
     broadcast(NULL, packet.tostring());
+    replay.append_record(packet.tojson());
+    replay.save(ts, tid);
+    replay.save();
 
     struct timeval btime, etime;
     gettimeofday(&btime, NULL);
-    replay.record_write();
-    replay.save(ts, ttid);
+    // replay.record_write();
+    // replay.save(ts, ttid);
     gettimeofday(&etime, NULL);
     mjlog.debug("game end diff time %d usec\n", (etime.tv_sec - btime.tv_sec) * 1000000 + etime.tv_usec - btime.tv_usec);
 
@@ -3029,7 +3037,7 @@ int Table::handler_chi(Player *player)
     seat.hole_cards.handler_chi(card, pattern, 0);
     seats[chu_seat].hole_cards.handler_chi(card, pattern, 1);
     seat.obsorb_seats.push_back(chu_seat);
-    handler_recored_chi(card, pattern, seat.seatid, chu_seat);
+    // handler_recored_chi(card, pattern, seat.seatid, chu_seat);
 
     dump_hole_cards(seat.hole_cards.cards, cur_seat, 1);
     chi_count++;
@@ -3193,7 +3201,7 @@ int Table::handler_chu(Player *player)
         }
     }
 
-    handler_record_chu(card, seat.seatid);
+    // handler_record_chu(card, seat.seatid);
     dump_hole_cards(seat.hole_cards.cards, cur_seat, 5);
 
     seat.last_actions[1] = seat.last_actions[0];
@@ -3258,6 +3266,7 @@ int Table::handler_chu(Player *player)
 
     packet.end();
     unicast(player, packet.tostring());
+    replay.append_record(packet.tojson());
 
     packet1.val["cmd"] = SERVER_BET_SUCC_BC;
     packet1.val["seatid"] = player->seatid;
@@ -3275,6 +3284,7 @@ int Table::handler_chu(Player *player)
     }
     packet1.end();
     broadcast(player, packet1.tostring());
+    replay.append_record(packet1.tojson());
     return 0;
 }
 
@@ -3326,7 +3336,7 @@ int Table::handler_peng(Player *player)
     seat.guo_hu_cards.clear();
     seat.guo_peng_cards.clear();
     seats[chu_seat].hole_cards.handler_peng(card, 1);
-    handler_recored_peng(card, seat.seatid, chu_seat);
+    // handler_recored_peng(card, seat.seatid, chu_seat);
     dump_hole_cards(seat.hole_cards.cards, cur_seat, 2);
 
     seat.obsorb_seats.push_back(chu_seat);
@@ -3390,6 +3400,7 @@ int Table::handler_peng(Player *player)
     vector_to_json_array(seat.hole_cards.cards, packet, "holes");
     packet.end();
     unicast(player, packet.tostring());
+    replay.append_record(packet.tojson());
 
     packet1.val["cmd"] = SERVER_BET_SUCC_BC;
     packet1.val["seatid"] = player->seatid;
@@ -3404,6 +3415,7 @@ int Table::handler_peng(Player *player)
     }
     packet1.end();
     broadcast(player, packet1.tostring());
+    replay.append_record(packet1.tojson());
 
     //if (seat.peng_record[chu_seat] == 1)
     //{
@@ -3510,7 +3522,7 @@ int Table::handler_gang(Player *player)
     if (gang_flag == 0)
     {
         seats[chu_seat].hole_cards.handler_gang(card, gang_flag, 1);
-        handler_recored_gang(card, seat.seatid, chu_seat, gang_flag);
+        // handler_recored_gang(card, seat.seatid, chu_seat, gang_flag);
 
         if (seat.peng_record.find(chu_seat) == seat.peng_record.end())
         {
@@ -3545,7 +3557,7 @@ int Table::handler_gang(Player *player)
     }
     else
     {
-        handler_recored_gang(card, seat.seatid, -1, gang_flag);
+        // handler_recored_gang(card, seat.seatid, -1, gang_flag);
     }
 
     if (gang_flag == 0)
@@ -3636,6 +3648,7 @@ int Table::handler_gang(Player *player)
     //vector_to_json_array(seat.hole_cards.obsorb_cards, packet, "obsorb_holes");
     packet.end();
     unicast(player, packet.tostring());
+    replay.append_record(packet.tojson());
 
     packet1.val["cmd"] = SERVER_BET_SUCC_BC;
     packet1.val["seatid"] = player->seatid;
@@ -3663,6 +3676,7 @@ int Table::handler_gang(Player *player)
     }
     packet1.end();
     broadcast(player, packet1.tostring());
+    replay.append_record(packet1.tojson());
 
     seat.gang_count[gang_flag]++;
     gang_count++;
@@ -3797,12 +3811,12 @@ int Table::handler_hu(Player *player)
 
     if (hu_flag == 0)
     {
-        handler_recored_hu(card, seat.seatid, chu_seat);
+        // handler_recored_hu(card, seat.seatid, chu_seat);
         seat.lian_gang_cards.clear();
     }
     else
     {
-        handler_recored_hu(0, seat.seatid, -1);
+        // handler_recored_hu(0, seat.seatid, -1);
     }
 
     Jpacket packet;
@@ -3815,6 +3829,7 @@ int Table::handler_hu(Player *player)
     vector_to_json_array(cards, packet, "holes");
     packet.end();
     unicast(player, packet.tostring());
+    replay.append_record(packet.tojson());
 
     Jpacket packet1;
     packet1.val["cmd"] = SERVER_BET_SUCC_BC;
@@ -3826,6 +3841,7 @@ int Table::handler_hu(Player *player)
     vector_to_json_array(cards, packet1, "holes");
     packet1.end();
     broadcast(player, packet1.tostring());
+    replay.append_record(packet1.tojson());
 
     return 0;
 }
@@ -3866,7 +3882,7 @@ int Table::handler_guo(Player *player)
 
     last_action = PLAYER_GUO;
 
-    handler_recored_guo(0, seat.seatid, chu_seat);
+    // handler_recored_guo(0, seat.seatid, chu_seat);
 
     Jpacket packet;
     packet.val["cmd"] = SERVER_BET_SUCC_UC;
@@ -3875,6 +3891,7 @@ int Table::handler_guo(Player *player)
     packet.val["action"] = action;
     packet.end();
     unicast(player, packet.tostring());
+    replay.append_record(packet.tojson());
 
     if (seat.pao_hu_flag == 1)
     {
@@ -3947,6 +3964,7 @@ int Table::handler_ting(Player *player)
     vector_to_json_array(seat.hole_cards.cards, packet, "holes");
     packet.end();
     unicast(player, packet.tostring());
+    replay.append_record(packet.tojson());
 
     Jpacket packet1;
     packet1.val["cmd"] = SERVER_BET_SUCC_BC;
@@ -3956,6 +3974,7 @@ int Table::handler_ting(Player *player)
     packet1.val["card"] = card;
     packet1.end();
     broadcast(player, packet1.tostring());
+    replay.append_record(packet1.tojson());
 
     return 0;
 }
@@ -6143,145 +6162,6 @@ void Table::handler_voice_req(Player *player)
     broadcast(NULL, packet.tostring());
 }
 
-void Table::handler_recored_mo(int value, int seat, int other)
-{
-    PlayRecord record;
-    memset(&record, 0, sizeof(record));
-    record.seats[0] = MBYTE(seat);
-    record.seats[1] = MBYTE(other);
-    record.action = RECORD_MO;
-    record.holes[0] = MBYTE(value);
-    replay.play_record.push_back(record);
-}
-
-void Table::handler_recored_chi(int value, int pattern[3], int seat, int other)
-{
-    PlayRecord record;
-    memset(&record, 0, sizeof(record));
-    record.seats[0] = MBYTE(seat);
-    record.seats[1] = MBYTE(other);
-    record.action = RECORD_CHI;
-
-    for (int i = 0; i < 3; i++)
-    {
-        record.holes[i] = MBYTE(pattern[i]);
-    }
-
-    replay.play_record.push_back(record);
-}
-
-void Table::handler_recored_peng(int value, int seat, int other)
-{
-    PlayRecord record;
-    memset(&record, 0, sizeof(record));
-    record.seats[0] = MBYTE(seat);
-    record.seats[1] = MBYTE(other);
-    record.action = RECORD_PENG;
-    record.holes[0] = MBYTE(value);
-
-    replay.play_record.push_back(record);
-}
-
-void Table::handler_recored_gang(int value, int seat, int other, int gang_flag)
-{
-    PlayRecord record;
-    memset(&record, 0, sizeof(record));
-    record.seats[0] = MBYTE(seat);
-    record.seats[1] = MBYTE(other);
-    record.action = RECORD_GANG;
-    record.flag = MBYTE(gang_flag);
-    record.holes[0] = MBYTE(value);
-
-    replay.play_record.push_back(record);
-}
-
-void Table::handler_recored_guo(int value, int seat, int other)
-{
-    PlayRecord record;
-    memset(&record, 0, sizeof(record));
-    record.seats[0] = MBYTE(seat);
-    record.seats[1] = MBYTE(other);
-    record.action = RECORD_GUO;
-    replay.play_record.push_back(record);
-}
-
-void Table::handler_recored_hu(int value, int seat, int other)
-{
-    PlayRecord record;
-    memset(&record, 0, sizeof(record));
-    record.seats[0] = MBYTE(seat);
-    record.seats[1] = MBYTE(other);
-    record.action = RECORD_HU;
-    if (other > -1)
-    {
-        record.flag = MBYTE(1);
-    }
-    else
-    {
-        record.flag = MBYTE(0);
-    }
-
-    record.holes[0] = MBYTE(value);
-    replay.play_record.push_back(record);
-}
-
-void Table::handler_record_horse(int seatid)
-{
-    Seat &seat = seats[seatid];
-    HorseRecord record;
-    memset(&record, 0, sizeof(record));
-    record.seatid = MBYTE(seatid);
-    record.horse_number = MBYTE(seat.horse_cards.size());
-    for (unsigned int i = 0; i < seat.horse_cards.size(); i++)
-    {
-        record.horse[i] = MBYTE(seat.horse_cards[i].value);
-    }
-    for (unsigned int i = 0; i < seat.zhong_horse.size(); i++)
-    {
-        record.zhong[i] = MBYTE(seat.zhong_horse[i]);
-    }
-    replay.horse_record.push_back(record);
-}
-
-void Table::handler_record_notice(int seatid)
-{
-    PlayRecord record;
-    memset(&record, 0, sizeof(record));
-    record.seats[0] = MBYTE(seatid);
-    record.action = RECORD_NOTICE;
-    if (actions[NOTICE_CHI])
-    {
-        record.flag |= RECORD_NOTICE_CHI;
-    }
-    if (actions[NOTICE_PENG])
-    {
-        record.flag |= RECORD_NOTICE_PENG;
-    }
-    if (actions[NOTICE_GANG])
-    {
-        record.flag |= RECORD_NOTICE_GANG;
-    }
-    if (actions[NOTICE_HU])
-    {
-        record.flag |= RECORD_NOTICE_HU;
-    }
-    if (actions[NOTICE_GUO])
-    {
-        record.flag |= RECORD_NOTICE_GUO;
-    }
-    replay.play_record.push_back(record);
-}
-
-void Table::handler_record_chu(int value, int seat)
-{
-    PlayRecord record;
-    memset(&record, 0, sizeof(record));
-    record.seats[0] = MBYTE(seat);
-    record.seats[1] = MBYTE(0xFF);
-    record.action = RECORD_CHU;
-    record.holes[0] = MBYTE(value);
-    replay.play_record.push_back(record);
-}
 
 string Table::format_card_desc(int card_type, int seatid)
 {
