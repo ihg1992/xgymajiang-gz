@@ -5621,6 +5621,75 @@ void Table::update_account_bet()
         }
     }
 
+    
+    if (bao_ji)
+    { //在包鸡的情况下，没有叫牌和胡牌的玩家，打出去的冲锋鸡，冲锋乌骨鸡，幺鸡，乌骨鸡要出分
+        for (int i = 0; i < seat_max; i++)
+        { //根据玩家手中的鸡牌，算bet值
+            if (seats[i].ready != 1)
+            {
+                continue;
+            }
+            seats[i].hole_cards.analysis();
+            if (i == win_seatid || seats[i].hole_cards.hu_cards.size() > 0) //胡牌和叫牌的玩家，不要出分
+            {
+                continue;
+            }
+
+            for (int j = 0; j < seat_max; j++)
+            {
+                if (i == j)
+                    continue;
+                if (seats[j].ready != 1)
+                {
+                    continue;
+                }
+                if (j != win_seatid && seats[j].hole_cards.hu_cards.size() <= 0) //胡牌和叫牌的玩家，进分
+                {
+                    continue;
+                }
+                if (seats[i].has_chong_feng_ji == 1)
+                { //c为1时,拿到冲锋鸡的获取其它玩家的分
+                    if (seats[i].has_jin_ji == 1)
+                    { //有金鸡时翻倍
+                        seats[j].score_from_players_detail[i][CHONG_FENG_JI_TYPE] = 4;
+                        score_from_players_item_count[j][CHONG_FENG_JI_TYPE] = 1;
+                        score_to_players_item_count[i][CHONG_FENG_JI_TYPE]++;
+                        mjlog.debug("jipai seats[%d] you chong feng ji fen bei.\n", i);
+                    }
+                    else
+                    {
+                        seats[j].score_from_players_detail[i][CHONG_FENG_JI_TYPE] = 2;
+                        score_from_players_item_count[j][CHONG_FENG_JI_TYPE] = 1;
+                        score_to_players_item_count[i][CHONG_FENG_JI_TYPE]++;
+                        mjlog.debug("jipai seats[%d] you chong feng ji.\n", i);
+                    }
+                }
+                if (seats[i].has_chong_feng_wu_gu_ji == 1)
+                { //c为1时,拿到冲锋乌骨鸡的获取给其它玩家分
+                    seats[j].score_from_players_detail[i][CHONG_FENG_WU_GU_JI_TYPE] = 2;
+                    score_from_players_item_count[j][CHONG_FENG_WU_GU_JI_TYPE] = 1;
+                    score_to_players_item_count[i][CHONG_FENG_WU_GU_JI_TYPE]++;
+                    mjlog.debug("jipai seats[%d] you chong feng wu gu ji.\n", i);
+                }
+                if (seats[i].has_yao_ji >= 1)
+                {
+                    seats[j].score_from_players_detail[i][YAO_JI_TYPE] += seats[i].has_yao_ji;
+                    score_from_players_item_count[j][YAO_JI_TYPE] += seats[i].has_yao_ji;
+                    score_to_players_item_count[i][YAO_JI_TYPE] += seats[i].has_yao_ji;
+                    mjlog.debug("jipai seats[%d] you yao ji cnt[%d].\n", i, seats[i].has_yao_ji);
+                }
+                if (seats[i].has_wu_gu_ji >= 1)
+                {
+                    seats[j].score_from_players_detail[i][WU_GU_JI_TYPE] += seats[i].has_wu_gu_ji;
+                    score_from_players_item_count[j][WU_GU_JI_TYPE] += seats[i].has_wu_gu_ji;
+                    score_to_players_item_count[i][WU_GU_JI_TYPE] += seats[i].has_wu_gu_ji;
+                    mjlog.debug("jipai seats[%d] you wu gu ji cnt[%d].\n", i, seats[i].has_wu_gu_ji);
+                }
+            }
+        }
+    }
+
     if (zha_niao == 1 &&  deck.horse_cards.size() > 0)
     { //扎鸟计算
         int niao_value = deck.horse_cards[0].value % 16;
