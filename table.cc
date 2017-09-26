@@ -635,7 +635,8 @@ int Table::handler_table_info(Player *player)
     packet.val["dismiss"] = dismiss_flag;
 
     packet.val["has_feng"] = has_feng;
-    packet.val["has_ghost"] = has_ghost;
+    if (lai_zi_ji)
+        packet.val["has_ghost"] = has_ghost;
     packet.val["hu_pair"] = hu_pair;
     packet.val["horse_num"] = horse_num;
     packet.val["max_play_count"] = max_play_board;
@@ -1219,7 +1220,14 @@ int Table::game_start()
             packet.val["cur_seats"].append(i);
         }
         if (lai_zi_ji)
+        {
             packet.val["ghost_card"] = trun_card.value;
+            packet.val["has_ghost"] =has_ghost;
+        }
+        else
+        {
+            packet.val["ghost_card"] = 0; //鬼牌
+        }
 
         if (seat.set_hole_cards.size() == 13 && set_card_flag == 1)
 		{
