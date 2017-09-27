@@ -232,10 +232,11 @@ void TableDelegate::init_table_type(Table *table, Json::Value &val, int robot)
 
 int TableDelegate::init_deck(int type)
 {
-    HoleCards::register_type_handler(CARD_TYPE_PING_HU, 8);          //1分
-    HoleCards::register_type_handler(CARD_TYPE_PENG_HU, 7);          //5分
-    HoleCards::register_type_handler(CARD_TYPE_QI_XIAO_DUI, 6);      //10分
-    HoleCards::register_type_handler(CARD_TYPE_QING_YI_SE, 5);       //10分
+    HoleCards::register_type_handler(CARD_TYPE_PING_HU, 9);          //1分
+    HoleCards::register_type_handler(CARD_TYPE_PENG_HU, 8);          //5分
+    HoleCards::register_type_handler(CARD_TYPE_QI_XIAO_DUI, 7);      //10分
+    HoleCards::register_type_handler(CARD_TYPE_QING_YI_SE, 6);       //10分
+    HoleCards::register_type_handler(CARD_TYPE_JIN_GOU_DIAO, 5);     //10分
     HoleCards::register_type_handler(CARD_TYPE_QING_PENG, 4);        //15分
     HoleCards::register_type_handler(CARD_TYPE_LONG_QI_DUI, 3);      //20分
     HoleCards::register_type_handler(CARD_TYPE_QING_QI_DUI, 2);      //20分
