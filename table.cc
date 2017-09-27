@@ -3793,13 +3793,13 @@ int Table::handler_hu(Player *player)
     seat.actions.push_front(action);
 
     //被胡玩家出牌之前的操作是杠,则是热炮牌型。
-    if (seats[chu_seat].last_actions[1] == PLAYER_GANG && seats[chu_seat].pao_hu_flag == 1)
+    if (seats[chu_seat].last_actions[1] == PLAYER_GANG && seats[chu_seat].last_actions[0] == PLAYER_CHU)
     {
         is_re_pao = 1;
         mjlog.debug("handler_hu is re pao\n");
     }
     //被胡玩家是碰杠,则是抢扛牌型。
-    if (seats[chu_seat].last_actions[0] == PLAYER_GANG)
+    if (gang_hu_seat >= 0)
     {
         is_qiang_gang = 1;
         mjlog.debug("handler_hu is qiang pao\n");
