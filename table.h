@@ -459,6 +459,9 @@ class Table
     int forbid_same_ip;
     int forbid_same_place;
 
+	
+	ev_timer ji_card_timer;
+    ev_tstamp ji_card_stamp;
     int substitute;
     Replay replay;
 
@@ -509,6 +512,10 @@ class Table
 
     int xing_qi;        //记录单局开始时，是星期几
     Card trun_card;
+	
+	int already_update_account_bet;
+    int bao_ting;
+    int sha_bao;
     Json::Value config_of_replay; //配置
   public:
     Table();
@@ -664,6 +671,9 @@ class Table
     int next_player_seatid_of(int cur_player);
     int pre_player_seatid_of(int cur_player);
     int get_set_hole_cards(Player *player);
+
+    static void ji_card_timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents);
+    void ji_game_end();
 };
 
 #endif

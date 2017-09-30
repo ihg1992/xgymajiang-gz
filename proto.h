@@ -139,6 +139,7 @@ enum server_command
     SERVER_SELECT_LACK_SUIT_END_SUCC_BC = 4082,//缺一门完成
     SERVER_SELECT_CHANGE_CARDS_SUCC_UC = 4083, //换牌过程
     SERVER_SELECT_LACK_SUIT_SUCC_UC = 4084,     //缺一门过程
+	SERVER_DISPLAY_JI_CARD_SUIT_SUCC_BC = 4085,     //显示鸡牌过程
 };
 
 #endif
