@@ -54,6 +54,7 @@ extern Log mjlog;
 #define SUBS_TIME_OUT 108000
 
 #define JI_CARD_TIME_OUT 1 
+#define GUN_GUN_JI_CARD_TIME_OUT 4 
 Table::Table() : preready_timer_stamp(PREREADY_TIME_OUT),
                  ready_timer_stamp(READY_TIME_OUT),
                  start_timer_stamp(START_TIME_OUT),
@@ -61,7 +62,8 @@ Table::Table() : preready_timer_stamp(PREREADY_TIME_OUT),
                  compare_timer_stamp(COMPARE_TIME_OUT),
                  dismiss_timer_stamp(DISMISS_TIME_OUT),
                  subs_timer_stamp(SUBS_TIME_OUT),
-                 ji_card_stamp(JI_CARD_TIME_OUT)
+                 ji_card_stamp(JI_CARD_TIME_OUT),
+                 gun_gun_ji_card_stamp(GUN_GUN_JI_CARD_TIME_OUT)
 {
     preready_timer.data = this;
     ev_timer_init(&preready_timer, Table::preready_timer_cb,
@@ -93,7 +95,11 @@ Table::Table() : preready_timer_stamp(PREREADY_TIME_OUT),
     ev_timer_init(&subs_timer, Table::subs_timer_cb, subs_timer_stamp, subs_timer_stamp);
 
 	ji_card_timer.data = this;
-	ev_timer_init(&ji_card_timer, Table::ji_card_timer_cb, ji_card_stamp, ji_card_stamp);
+    ev_timer_init(&ji_card_timer, Table::ji_card_timer_cb, ji_card_stamp, ji_card_stamp);
+    
+    gun_gun_ji_card_timer.data = this;
+    ev_timer_init(&gun_gun_ji_card_timer, Table::gun_gun_ji_card_timer_cb, gun_gun_ji_card_stamp, gun_gun_ji_card_stamp);
+
     cur_flow_mode = FLOW_END;
 
     owner_uid = -1;
@@ -116,7 +122,8 @@ Table::~Table()
     ev_timer_stop(zjh.loop, &dismiss_timer);
     ev_timer_stop(zjh.loop, &ahead_start_timer);
     ev_timer_stop(zjh.loop, &subs_timer);
-	ev_timer_stop(zjh.loop, &ji_card_timer);
+    ev_timer_stop(zjh.loop, &ji_card_timer);
+    ev_timer_stop(zjh.loop, &gun_gun_ji_card_timer);
 }
 
 int Table::init(int my_tid, int my_vid, int my_zid, int my_type, float my_fee,
@@ -250,7 +257,10 @@ void Table::init_table_type(int set_type, int set_has_ghost, int set_has_feng, i
 		seat_max = 2;
 	else if (gui_yang == 3)
         seat_max = 3;
-    deck.init(has_feng, has_ghost, horse_num, hu_pair);
+    if (lai_zi_ji)
+        deck.init(has_feng, 2, horse_num, hu_pair);
+    else
+        deck.init(has_feng, 0, horse_num, hu_pair);
 }
 
 int Table::get_card_type(int salt)
@@ -1317,7 +1327,8 @@ int Table::count_next_bet()
     }
 
     cur_seat = _seat;
-    start_next_bet(0);
+    if (get_gun_gun_ji() == 0)
+        start_next_bet(0);
     gettimeofday(&etime, NULL);
     mjlog.debug("count next bet diff time %d usec\n", (etime.tv_sec - btime.tv_sec) * 1000000 + etime.tv_usec - btime.tv_usec);
     return 0;
@@ -1502,28 +1513,6 @@ int Table::start_next_bet(int flag)
             packet.val["fetch_flag"] = 1;
             fetch_flag = 1;
 
-            if (last_action == PLAYER_GANG && is_fang_ji == 2)
-            { //玩家杠一次，有摸牌行为就翻一次鸡,滚滚鸡
-                if (deck.permit_get() == 0)
-                {
-                    is_huang_zhuang = 1;
-                    // 结束游戏
-                    mjlog.debug("deck no card, liuju\n");
-                    game_end();
-                    return 0;
-                }
-                Card c;
-                deck.pop(c);
-                ji_data ji;
-                ji.type = GUN_GUN_JI;
-                ji.value = c.value + 1;
-                if (c.face == 9)
-                {
-                    ji.value = c.value - 8;
-                }
-                gun_gun_ji_data.push_back(ji);
-                mjlog.debug("gun gun ji value[%d]\n", ji.value);
-            }
             // seat.hole_cards.handler_ting(seat.hole_cards.last_card);
             // if (seat.get_next_card_cnt == 1 && seat.hole_cards.hu_cards.size() > 0)
             // {
@@ -3579,8 +3568,8 @@ int Table::handler_gang(Player *player)
         seat.gang_seats.push_back(chu_seat);
         seat.total_ming_gang++;
         seat.score_from_players_detail[chu_seat][MING_GANG_TYPE] += MING_GANG_BET;
-        score_from_players_item_count[player->seatid][MING_GANG_TYPE]++;
-        score_to_players_item_count[chu_seat][MING_GANG_TYPE]++;
+        // score_from_players_item_count[player->seatid][MING_GANG_TYPE]++;
+        // score_to_players_item_count[chu_seat][MING_GANG_TYPE]++;
     }
     else if (gang_flag == 1)
     {
@@ -3588,14 +3577,14 @@ int Table::handler_gang(Player *player)
         seat.total_ming_gang++;
         seat.score_from_players_detail[-1][PENG_GANG_TYPE] += PENG_GANG_BET * (max_ready_players - 1);
         mjlog.debug("player[%d] peng gang fen[%d]\n", player->seatid, PENG_GANG_BET * (max_ready_players - 1));
-        score_from_players_item_count[player->seatid][PENG_GANG_TYPE]++;
+        // score_from_players_item_count[player->seatid][PENG_GANG_TYPE]++;
         for (int j = 0; j < seat_max; j++)
         {
             if (seats[j].ready != 1 || player->seatid == j)
             {
                 continue;
             }
-            score_to_players_item_count[j][PENG_GANG_TYPE]++;
+            // score_to_players_item_count[j][PENG_GANG_TYPE]++;
             mjlog.debug("player[%d] jian peng gang fen\n", j);
         }
     }
@@ -3616,14 +3605,14 @@ int Table::handler_gang(Player *player)
         {
             seat.score_from_players_detail[-1][AN_GANG_TYPE] += AN_GANG_BET * (max_ready_players - 1);
             mjlog.debug("player[%d] an gang fen[%d]\n", player->seatid, AN_GANG_BET * (max_ready_players - 1));
-            score_from_players_item_count[player->seatid][AN_GANG_TYPE]++;
+            // score_from_players_item_count[player->seatid][AN_GANG_TYPE]++;
             for (int j = 0; j < seat_max; j++)
             {
                 if (seats[j].ready != 1 || player->seatid == j)
                 {
                     continue;
                 }
-                score_to_players_item_count[j][AN_GANG_TYPE]++;
+                // score_to_players_item_count[j][AN_GANG_TYPE]++;
                 mjlog.debug("player[%d] jian an gang fen\n", j);
             }
         }
@@ -5051,24 +5040,24 @@ void Table::update_account_bet()
                     seats[i].hu_pai_lei_xing = "未叫牌";
                 else
                     seats[i].hu_pai_lei_xing = "叫牌";
-                if (gang_shang_hua_seat >= 0)
-                {
-                    score_to_players_item_count[gang_shang_hua_seat][ZI_MO_TYPE] = 1;
+                // if (gang_shang_hua_seat >= 0)
+                // {
+                //     score_to_players_item_count[gang_shang_hua_seat][ZI_MO_TYPE] = 1;
 
-                    if (seats[win_seatid].lian_zhuang_cnt > 1 && is_lian_zhuang) //连庄分
-                    {
-                        score_to_players_item_count[gang_shang_hua_seat][LIAN_ZHUANG_TYPE]++;
-                    }
-                }
-                else
-                {
+                //     if (seats[win_seatid].lian_zhuang_cnt > 1 && is_lian_zhuang) //连庄分
+                //     {
+                //         score_to_players_item_count[gang_shang_hua_seat][LIAN_ZHUANG_TYPE]++;
+                //     }
+                // }
+                // else
+                // {
                     score_to_players_item_count[i][ZI_MO_TYPE]++;
 
                     if (seats[win_seatid].lian_zhuang_cnt > 1 && is_lian_zhuang) //连庄分
                     {
                         score_to_players_item_count[i][LIAN_ZHUANG_TYPE]++;
                     }
-                }
+                // }
             }
         }
     }
@@ -5398,34 +5387,6 @@ void Table::update_account_bet()
         seats[i].hole_cards.analysis();
         if (i != win_seatid && seats[i].hole_cards.hu_cards.size() <= 0) //没有叫牌的玩家，不算鸡分
         {
-            if (bao_ji == 1 && (seats[i].has_ze_ren_ji == 1 || seats[i].has_wu_gu_ze_ren_ji == 1))
-            {
-                for (int j = 0; j < seat_max; j++)
-                {
-                    if (i == j)
-                        continue;
-                    if (seats[j].ready != 1)
-                    {
-                        continue;
-                    }
-                    if (seats[i].has_ze_ren_ji == 1)
-                    {
-                        seats[j].score_from_players_detail[i][ZE_REN_JI_TYPE] = 1; //不管输赢，有责任鸡都输出1分
-                        score_from_players_item_count[j][ZE_REN_JI_TYPE] = 1;
-                        score_to_players_item_count[i][ZE_REN_JI_TYPE]++;
-                        mjlog.debug("jipai seats[%d] you ze ren ji.\n", i);
-                    }
-                    if (seats[i].has_wu_gu_ze_ren_ji == 1)
-                    {
-                        seats[j].score_from_players_detail[i][ZE_REN_JI_TYPE] = 1; //不管输赢，有责任鸡都输出1分
-                        score_from_players_item_count[j][ZE_REN_JI_TYPE] = 1;
-                        if (seats[i].has_ze_ren_ji == 1)
-                            score_from_players_item_count[j][ZE_REN_JI_TYPE] = 2;
-                        score_to_players_item_count[i][ZE_REN_JI_TYPE]++;
-                        mjlog.debug("jipai seats[%d] you wu gu ze ren ji.\n", i);
-                    }
-                }
-            }
             continue;
         }
         if (bao_ji != 1) //在非包鸡情况下，只有赢牌玩家才算鸡分
@@ -6117,12 +6078,15 @@ void Table::update_account_bet()
             {
                 score_from_players_item_total[i][MING_GANG_TYPE] += secondValue[MING_GANG_TYPE];
                 score_to_players_item_total[firstValue][MING_GANG_TYPE] += secondValue[MING_GANG_TYPE];
+                score_from_players_item_count[i][MING_GANG_TYPE] += secondValue[MING_GANG_TYPE] / MING_GANG_BET;
+                score_to_players_item_count[firstValue][MING_GANG_TYPE] += secondValue[MING_GANG_TYPE] / MING_GANG_BET;
                 mjlog.debug("score item ming_gang_type# from[%d] cnt[%d] to[%d] cnt[%d] \n", score_from_players_item_total[i][MING_GANG_TYPE], score_from_players_item_count[i][MING_GANG_TYPE],
                             score_to_players_item_total[firstValue][MING_GANG_TYPE], score_to_players_item_count[firstValue][MING_GANG_TYPE]);
             }
             if (secondValue.find(PENG_GANG_TYPE) != secondValue.end())
             {
                 score_from_players_item_total[i][PENG_GANG_TYPE] +=  secondValue[PENG_GANG_TYPE];
+                score_from_players_item_count[i][PENG_GANG_TYPE] += secondValue[PENG_GANG_TYPE] / ( PENG_GANG_BET * (max_ready_players - 1));
                 mjlog.debug("score item peng_gang_type# from[%d] cnt[%d]\n", score_from_players_item_total[i][PENG_GANG_TYPE], score_from_players_item_count[i][PENG_GANG_TYPE]);
 
                 for (int j = 0; j < seat_max; j++)
@@ -6132,12 +6096,14 @@ void Table::update_account_bet()
                         continue;
                     }
                     score_to_players_item_total[j][PENG_GANG_TYPE] += secondValue[PENG_GANG_TYPE] / (max_ready_players - 1);
+                    score_to_players_item_count[j][PENG_GANG_TYPE] += secondValue[PENG_GANG_TYPE] / ( PENG_GANG_BET * (max_ready_players - 1));
                     mjlog.debug("score item peng_gang_type# to[%d] cnt[%d] \n", score_to_players_item_total[j][PENG_GANG_TYPE], score_to_players_item_count[j][PENG_GANG_TYPE]);
                 }
             }
             if (secondValue.find(AN_GANG_TYPE) != secondValue.end())
             {
                 score_from_players_item_total[i][AN_GANG_TYPE] +=  secondValue[AN_GANG_TYPE];
+                score_from_players_item_count[i][AN_GANG_TYPE] += secondValue[AN_GANG_TYPE] / ( AN_GANG_BET * (max_ready_players - 1));
                 mjlog.debug("score item an_gang_type# from[%d] cnt[%d]\n", score_from_players_item_total[i][AN_GANG_TYPE], score_from_players_item_count[i][AN_GANG_TYPE]);
 
                 for (int j = 0; j < seat_max; j++)
@@ -6147,6 +6113,7 @@ void Table::update_account_bet()
                         continue;
                     }
                     score_to_players_item_total[j][AN_GANG_TYPE] += secondValue[AN_GANG_TYPE] / (max_ready_players - 1);
+                    score_to_players_item_count[j][AN_GANG_TYPE] += secondValue[AN_GANG_TYPE] / (AN_GANG_BET * (max_ready_players - 1));
                     mjlog.debug("score item an_gang_type# to[%d] cnt[%d] \n", score_to_players_item_total[j][AN_GANG_TYPE], score_to_players_item_count[j][AN_GANG_TYPE]);
                 }
             }
@@ -7603,4 +7570,61 @@ void Table::ji_game_end()
     broadcast(NULL, packet.tostring());
     replay.append_record(packet.tojson());
     ev_timer_again(zjh.loop, &ji_card_timer);
+}
+
+void Table::gun_gun_ji_card_timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents)
+{
+    Table *table = (Table*) w->data;
+	ev_timer_stop(zjh.loop, &table->gun_gun_ji_card_timer);
+	mjlog.debug("gun_gun_ji_card_timer_cb\n");
+	table->start_next_bet(0);
+}
+
+
+void Table::gun_gun_ji(int value)
+{
+	Jpacket packet;
+    packet.val["cmd"] = SERVER_DISPLAY_JI_CARD_SUIT_SUCC_BC;
+    packet.val["value"].append(value);
+    packet.val["type"].append(GUN_GUN_JI);
+    packet.end();
+    broadcast(NULL, packet.tostring());
+    replay.append_record(packet.tojson());
+    ev_timer_again(zjh.loop, &gun_gun_ji_card_timer);
+}
+
+int Table::get_gun_gun_ji()
+{
+    if (gang_hu_count > 1 || pao_hu_count > 1)
+    {
+        mjlog.debug("gang_hu_count %d, pao_hu_count %d\n", gang_hu_count, pao_hu_count);
+        ji_game_end();
+        return 0;
+    }
+
+    if (last_action == PLAYER_GANG && is_fang_ji == 2)
+    { //玩家杠一次，有摸牌行为就翻一次鸡,滚滚鸡
+        if (deck.permit_get() == 0)
+        {
+            is_huang_zhuang = 1;
+            // 结束游戏
+            mjlog.debug("deck no card, liuju\n");
+            game_end();
+            return 0;
+        }
+        Card c;
+        deck.pop(c);
+        ji_data ji;
+        ji.type = GUN_GUN_JI;
+        ji.value = c.value + 1;
+        if (c.face == 9)
+        {
+            ji.value = c.value - 8;
+        }
+        gun_gun_ji_data.push_back(ji);
+        mjlog.debug("gun gun ji value[%d]\n", ji.value);
+        gun_gun_ji(ji.value);
+        return 1;
+    }
+    return 0;
 }

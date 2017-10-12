@@ -384,6 +384,11 @@ class Table
     ev_timer subs_timer;
     ev_tstamp subs_timer_stamp;
 
+	ev_timer ji_card_timer;
+    ev_tstamp ji_card_stamp;
+    
+    ev_timer gun_gun_ji_card_timer;
+    ev_tstamp gun_gun_ji_card_stamp;
     //ev_timer                    single_ready_timer;
     //ev_tstamp                   single_ready_timer_stamp;
     int cur_flow_mode;
@@ -460,8 +465,6 @@ class Table
     int forbid_same_place;
 
 	
-	ev_timer ji_card_timer;
-    ev_tstamp ji_card_stamp;
     int substitute;
     Replay replay;
 
@@ -673,7 +676,10 @@ class Table
     int get_set_hole_cards(Player *player);
 
     static void ji_card_timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents);
+    static void gun_gun_ji_card_timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents);
     void ji_game_end();
+    int get_gun_gun_ji();
+    void gun_gun_ji(int);
 };
 
 #endif
