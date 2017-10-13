@@ -1139,8 +1139,9 @@ int Table::game_start()
 {
     ev_timer_stop(zjh.loop, &subs_timer);
     ts = time(NULL);
+    // Replay::init_handler();
     replay.init(ts, tid); //记录回放
-    replay.append_record(config_of_replay);
+    // replay.append_record(config_of_replay);
     state = BETTING;
     mjlog.debug("game start.\n");
     cur_flow_mode = zjh.game->flow_mode;
@@ -1163,6 +1164,7 @@ int Table::game_start()
     deck.fill();
     deck.shuffle(tid);
     //deck.debug();
+    
 
     if (round_count == 0)
     {
@@ -1192,8 +1194,8 @@ int Table::game_start()
         ev_timer_set(&start_timer, START_TIME_OUT, START_TIME_OUT);
     }
 
-    // replay.init(ts, ttid);
     init_dealer();
+    record_table_info();
     hu_seat = -1;
     pao_hu_seat = -1;
     gang_hu_seat = -1;
@@ -1225,7 +1227,7 @@ int Table::game_start()
                 continue;
             }
             packet.val["uids"].append(player->uid);
-            packet.val["seats"].append(player->seatid);
+            // packet.val["seats"].append(player->seatid);
             packet.val["names"].append(player->name);
             packet.val["sexs"].append(player->sex);
         }
@@ -1606,7 +1608,6 @@ int Table::start_next_bet(int flag)
     }
     packet1.end();
     broadcast(seat.player, packet1.tostring());
-    replay.append_record(packet1.tojson());
 
     if (actions[NOTICE_CHI] == 1 || actions[NOTICE_PENG] == 1 || actions[NOTICE_GANG] == 1 ||
         actions[NOTICE_HU] == 1 || actions[NOTICE_GUO] == 1)
@@ -1933,6 +1934,11 @@ int Table::game_end(int flag)
     ev_timer_stop(zjh.loop, &start_timer);
     ev_timer_stop(zjh.loop, &compare_timer);
 
+    int save_flag = 0;
+	if (state == BETTING)
+	{
+		save_flag = 1;
+	}
     state = END_GAME;
 
     if (players.size() == 0)
@@ -1974,58 +1980,63 @@ int Table::game_end(int flag)
         {
             packet.val["zhong_horse"].append(0); //这个字段在鸡中不用
         }
-
-        update_account_bet();
-
-        for (int i = 0; i < seat_max; i++)
+        if (save_flag == 1)
         {
-            if (seats[i].ready != 1)
-            {
-                continue;
-            }
+            update_account_bet();
 
-            if (seats[i].bet > 0)
+            for (int i = 0; i < seat_max; i++)
             {
-                win_update(seats[i].player);
+                if (seats[i].ready != 1)
+                {
+                    continue;
+                }
+
+                if (seats[i].bet > 0)
+                {
+                    win_update(seats[i].player);
+                }
+                else
+                {
+                    lose_update(seats[i].player);
+                }
             }
-            else
-            {
-                lose_update(seats[i].player);
-            }
+            // 记录结果
+            insert_flow_record();
         }
-        // 记录结果
-        insert_flow_record();
     }
     else
     {
         packet.val["is_liuju"] = 0;
-        update_account_bet();
-
-        // 记录结果
-        insert_flow_record();
-
-        //int size = zhong_horse.size();
-        int size = ji_pai.size();
-        for (int i = 0; i < size; i++)
+        if (save_flag == 1)
         {
-            //packet.val["zhong_horse"].append(zhong_horse[i]);
-            packet.val["zhong_horse"].append(1); //这个字段在鸡中不用
-        }
+            update_account_bet();
 
-        for (int i = 0; i < seat_max; i++)
-        {
-            if (seats[i].ready != 1)
+            // 记录结果
+            insert_flow_record();
+
+            //int size = zhong_horse.size();
+            int size = ji_pai.size();
+            for (int i = 0; i < size; i++)
             {
-                continue;
+                //packet.val["zhong_horse"].append(zhong_horse[i]);
+                packet.val["zhong_horse"].append(1); //这个字段在鸡中不用
             }
 
-            if (seats[i].bet > 0)
+            for (int i = 0; i < seat_max; i++)
             {
-                win_update(seats[i].player);
-            }
-            else
-            {
-                lose_update(seats[i].player);
+                if (seats[i].ready != 1)
+                {
+                    continue;
+                }
+
+                if (seats[i].bet > 0)
+                {
+                    win_update(seats[i].player);
+                }
+                else
+                {
+                    lose_update(seats[i].player);
+                }
             }
         }
     }
@@ -2060,6 +2071,11 @@ int Table::game_end(int flag)
                 packet.val["players"][j]["forbided_seatid"] = seats[i].forbided_seatid;
                 packet.val["players"][j]["chi_san_bi_seatid"] = seats[i].forbided_seatid;
 
+                std::list<Card>::iterator lit = seats[i].hole_cards.discard_cards.begin();
+                for (; lit != seats[i].hole_cards.discard_cards.end(); lit++)
+                {
+                    packet.val["players"][j]["discard_holes"].append(lit->value);
+                }
                 //vector_to_json_array(seats[i].ji_pai, packet.val["players"][j], "settlement_type", "settlement_score");  //结算的类型和分值
                 if (is_huang_zhuang || is_re_pao || is_qiang_gang)
                 {
@@ -2264,8 +2280,11 @@ int Table::game_end(int flag)
     packet.end();
     broadcast(NULL, packet.tostring());
     replay.append_record(packet.tojson());
-    replay.save(ts, tid);
-    replay.save();
+    if (save_flag == 1)
+    {
+        //replay.save(ts, ttid);
+		//replay.async_save(ts, ttid);
+    }
 
     struct timeval btime, etime;
     gettimeofday(&btime, NULL);
@@ -3287,7 +3306,6 @@ int Table::handler_chu(Player *player)
     }
     packet1.end();
     broadcast(player, packet1.tostring());
-    replay.append_record(packet1.tojson());
     return 0;
 }
 
@@ -3418,7 +3436,6 @@ int Table::handler_peng(Player *player)
     }
     packet1.end();
     broadcast(player, packet1.tostring());
-    replay.append_record(packet1.tojson());
 
     //if (seat.peng_record[chu_seat] == 1)
     //{
@@ -3679,7 +3696,6 @@ int Table::handler_gang(Player *player)
     }
     packet1.end();
     broadcast(player, packet1.tostring());
-    replay.append_record(packet1.tojson());
 
     seat.gang_count[gang_flag]++;
     gang_count++;
@@ -3844,7 +3860,6 @@ int Table::handler_hu(Player *player)
     vector_to_json_array(cards, packet1, "holes");
     packet1.end();
     broadcast(player, packet1.tostring());
-    replay.append_record(packet1.tojson());
 
     return 0;
 }
@@ -3977,7 +3992,6 @@ int Table::handler_ting(Player *player)
     packet1.val["card"] = card;
     packet1.end();
     broadcast(player, packet1.tostring());
-    replay.append_record(packet1.tojson());
 
     return 0;
 }
@@ -7627,4 +7641,41 @@ int Table::get_gun_gun_ji()
         return 1;
     }
     return 0;
+}
+
+void Table::record_table_info()
+{
+	Jpacket packet;
+	packet.val["owner_uid"] = owner_uid;
+    packet.val["cur_round"] = round_count;
+    packet.val["total_round"] = max_play_board;
+	packet.val["has_feng"] = has_feng;
+    // packet.val["has_ghost"] = has_ghost;
+    packet.val["hu_pair"] = hu_pair;
+    packet.val["horse_num"] = horse_num;
+    packet.val["max_play_count"] = max_play_board;
+    packet.val["table_type"] = type;
+	packet.val["substitute"] = substitute;
+    packet.val["cost_select_flag"] = cost_select_flag;
+    packet.val["ttid"] = ttid;
+    packet.val["ben_ji"] = ben_ji;
+    packet.val["wu_gu_ji"] = wu_gu_ji;
+    packet.val["bao_ji"] = bao_ji;
+    packet.val["is_fang_ji"] = is_fang_ji;
+    packet.val["is_lian_zhuang"] = is_lian_zhuang;
+    packet.val["is_man_tang_ji"] = is_man_tang_ji; //1, 满堂鸡 2 手上鸡
+
+    packet.val["jin_yin_ji"] = jin_yin_ji;  //金银鸡
+    packet.val["chui_feng_ji"] = chui_feng_ji;//吹风鸡
+    packet.val["xing_qi_ji"] = xing_qi_ji; //星期鸡
+    packet.val["shu_zi_ji"] = shu_zi_ji;  //数字鸡
+    packet.val["jian_qi_wa"] = jian_qi_wa;  //见七挖
+
+    packet.val["gui_yang"] = gui_yang;  //1贵阳  2 二丁 3 三丁
+    packet.val["lai_zi_ji"] = lai_zi_ji; //癞子鸡
+    packet.val["zha_niao"] = zha_niao;  //扎鸟
+	packet.val["cmd"] = SERVER_TABLE_INFO_UC;
+    // packet.val["ghost_card"] = ghost_card;
+	packet.end();
+	replay.append_record(packet.tojson());	
 }

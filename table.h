@@ -680,6 +680,7 @@ class Table
     void ji_game_end();
     int get_gun_gun_ji();
     void gun_gun_ji(int);
+    void record_table_info();
 };
 
 #endif
