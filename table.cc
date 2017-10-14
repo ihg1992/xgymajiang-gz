@@ -261,6 +261,7 @@ void Table::init_table_type(int set_type, int set_has_ghost, int set_has_feng, i
         deck.init(has_feng, 2, horse_num, hu_pair);
     else
         deck.init(has_feng, 0, horse_num, hu_pair);
+    max_ready_players = seat_max;
 }
 
 int Table::get_card_type(int salt)
