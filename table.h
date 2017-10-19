@@ -517,7 +517,6 @@ class Table
     Card trun_card;
 	
 	int already_update_account_bet;
-    int bao_ting;
     int sha_bao;
     Json::Value config_of_replay; //配置
   public:

@@ -250,7 +250,6 @@ void Table::init_table_type(int set_type, int set_has_ghost, int set_has_feng, i
     zha_niao = set_zha_niao;             //扎鸟
     is_lian_zhuang = set_is_lian_zhuang;  //连庄
     already_update_account_bet = 0;
-    bao_ting = 0;
     sha_bao = 0;
 	if( gui_yang == 1 )
 		seat_max = 4;
@@ -369,7 +368,6 @@ void Table::reset()
     score_from_players_item_total.clear();
     score_to_players_item_count.clear();
     score_to_players_item_total.clear();
-    bao_ting = 0;
     sha_bao = 0;
     already_update_account_bet = 0;
 }
@@ -4742,7 +4740,6 @@ int Table::calculate_base_score(int sid, int pao, int card_value)
     }
     if (seats[sid].is_bao_ting == 1 && is_huang_zhuang == 0) //报听
     {
-        bao_ting = 1;
         if (score == 1)
             score = 10; 
         else
@@ -6497,7 +6494,7 @@ string Table::format_card_desc(int card_type, int seatid)
             str_special = "连杠杠上炮, ";
         }
 
-        if (bao_ting)
+        if (seats[seatid].is_bao_ting)
         {
             str_special = "报听, ";
         }
