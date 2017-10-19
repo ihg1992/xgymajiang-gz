@@ -502,7 +502,7 @@ class Table
     int red_type;
 
 
-    int is_man_tang_ji; //1，满堂鸡  0 手上鸡
+    int is_man_tang_ji; //1，满堂鸡  2 手上鸡
     int jin_yin_ji;     //金银鸡
     int chui_feng_ji;   //吹风鸡
     int xing_qi_ji;     //星期鸡

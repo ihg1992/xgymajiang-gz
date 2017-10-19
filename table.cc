@@ -236,9 +236,10 @@ void Table::init_table_type(int set_type, int set_has_ghost, int set_has_feng, i
     ben_ji = set_ben_ji;
     wu_gu_ji = set_wu_gu_ji;
     bao_ji = set_bao_ji;
+    bao_ji = 1;
 
     is_fang_ji = set_is_fang_ji;
-    is_man_tang_ji = set_is_man_tang_ji; //1，满堂鸡  0 手上鸡
+    is_man_tang_ji = set_is_man_tang_ji; //1，满堂鸡  2 手上鸡
     jin_yin_ji = set_jin_yin_ji;         //金银鸡
     chui_feng_ji = set_chui_feng_ji;     //吹风鸡
     xing_qi_ji = set_xing_qi_ji;         //星期鸡
@@ -5400,7 +5401,7 @@ void Table::update_account_bet()
             }
 
             //查看打出去的牌
-            if (!is_man_tang_ji)
+            if (is_man_tang_ji == 1 || ji_pai[i].value == 1 || ji_pai[i].value == 2 * 16 + 8)
             {
                 std::list<Card>::iterator ite = seats[j].hole_cards.discard_cards.begin();
                 for (; ite != seats[j].hole_cards.discard_cards.end(); ++ite)
