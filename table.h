@@ -519,6 +519,7 @@ class Table
 	int already_update_account_bet;
     int sha_bao;
     Json::Value config_of_replay; //配置
+    int fang_8_tong; //记录是否翻到8筒
   public:
     Table();
     virtual ~Table();

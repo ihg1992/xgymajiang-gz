@@ -30,7 +30,7 @@ extern Log mjlog;
 #define YAO_BAI_JI_BET 1          // 摇摆鸡
 #define FANG_JI_BET 1             // 翻鸡
 #define BEN_JI_BET 1              // 本鸡
-#define WU_GU_JI_BET 1            // 乌骨鸡
+#define WU_GU_JI_BET 2            // 乌骨鸡
 #define CHONG_FENG_WU_GU_JI_BET 2 // 冲锋乌骨鸡
 #define YAO_JI_BET 1              // 幺鸡
 #define CHONG_FEN_JI_BET 2        // 冲锋鸡
@@ -146,6 +146,7 @@ int Table::init(int my_tid, int my_vid, int my_zid, int my_type, float my_fee,
     seat_max = 4;
     max_play_board = 4;
     round_count = 0;
+    fang_8_tong = 0;
 
     cur_players = 0;
     players.clear();
@@ -251,6 +252,7 @@ void Table::init_table_type(int set_type, int set_has_ghost, int set_has_feng, i
     is_lian_zhuang = set_is_lian_zhuang;  //连庄
     already_update_account_bet = 0;
     sha_bao = 0;
+    fang_8_tong = 0;
 	if( gui_yang == 1 )
 		seat_max = 4;
 	else if( gui_yang == 2)
@@ -349,7 +351,7 @@ void Table::reset()
     forbid_hu_record.clear();
     ahead_start_flag = 0;
     ahead_start_uid = -1;
-
+    fang_8_tong = 0;
     horse_num = 1;
     is_re_pao = 0;
     is_qiang_gang = 0;
@@ -370,6 +372,7 @@ void Table::reset()
     score_to_players_item_total.clear();
     sha_bao = 0;
     already_update_account_bet = 0;
+    gun_gun_ji_data.clear();
 }
 void Table::vector_to_json_array(std::vector<ji_data> &cards, Json::Value &val, string key, string key2)
 {
@@ -5187,6 +5190,7 @@ void Table::update_account_bet()
             }
             else if (ji.value == 2 * 16 + 8 && (wu_gu_ji == 1))
             {
+                fang_8_tong = 1;
                 // ji_pai[1].type = JIN_JI;
                 mjlog.debug("jipai has jin ji[wu gu ji]\n", ji.value);
             }
@@ -5216,6 +5220,7 @@ void Table::update_account_bet()
             }
             else if (ji1.value == 2 * 16 + 8 && (wu_gu_ji == 1))
             {
+                fang_8_tong = 1;
                 // ji_pai[1].type = JIN_JI;
                 mjlog.debug("jipai has jin ji[wu gu ji]\n", ji1.value);
             }
@@ -5241,6 +5246,7 @@ void Table::update_account_bet()
             }
             else if (ji2.value == 2 * 16 + 8 && (wu_gu_ji == 1))
             {
+                fang_8_tong = 1;
                 // ji_pai[1].type = JIN_JI;
                 mjlog.debug("jipai has jin ji[wu gu ji]\n", ji2.value);
             }
@@ -5268,15 +5274,16 @@ void Table::update_account_bet()
             }
             else if (ji2.value == 2 * 16 + 8 && (wu_gu_ji == 1))
             {
+                fang_8_tong = 1;
                 // ji_pai[1].type = JIN_JI;
                 mjlog.debug("jipai has jin ji[wu gu ji]\n", ji2.value);
             }
-            else
-            {
+            // else
+            // {
                 ji_pai.push_back(ji2);
                 horse_count++;
                 mjlog.debug("jipai fangji[%d]\n", ji2.value);
-            }
+            // }
         }
         else if (is_fang_ji == 2)
         {
@@ -5472,6 +5479,7 @@ void Table::update_account_bet()
             continue;
         }
 
+        int add_chong_ba = 0;
         for (int j = 0; j < seats[i].horse_count; ++j)
         {
 
@@ -5558,9 +5566,14 @@ void Table::update_account_bet()
                     mjlog.debug("BEN JI seatsid[%d] win %d seatsid[%d] lose\n", i, BEN_JI_BET, k);
                     break;
                 case WU_GU_JI:
-                    seats[i].score_from_players_detail[k][WU_GU_JI_TYPE] += WU_GU_JI_BET;
+                    if (seats[i].has_chong_feng_wu_gu_ji && add_chong_ba < max_ready_players - 1)
+                    {
+                        ++add_chong_ba;
+                        seats[i].score_from_players_detail[k][WU_GU_JI_TYPE] += WU_GU_JI_BET * (fang_8_tong + 1);
+                    }
+                    seats[i].score_from_players_detail[k][WU_GU_JI_TYPE] += WU_GU_JI_BET * (fang_8_tong + 1);
                     score_to_players_item_count[k][WU_GU_JI_TYPE]++;
-                    mjlog.debug("WU_GU_JI seatsid[%d] win %d seatsid[%d] lose\n", i, WU_GU_JI_BET, k);
+                    mjlog.debug("WU_GU_JI seatsid[%d] win %d seatsid[%d] lose\n", i, WU_GU_JI_BET * (fang_8_tong + 1), k);
                     break;
                 case YAO_JI:
                     seats[i].score_from_players_detail[k][YAO_JI_TYPE] += YAO_JI_BET;
@@ -5593,9 +5606,9 @@ void Table::update_account_bet()
                     mjlog.debug("XING QI JI seatsid[%d] win %d seatsid[%d] lose\n", i, XING_QI_JI_BET, k);
                     break;
                 case SHU_ZI_JI:
-                    seats[i].score_from_players_detail[k][SHU_ZI_JI_TYPE] += seats[i].ji_pai[j].value;
+                    seats[i].score_from_players_detail[k][SHU_ZI_JI_TYPE] += seats[i].ji_pai[j].value % 16;
                     score_to_players_item_count[k][SHU_ZI_JI_TYPE]++;
-                    mjlog.debug("SHU ZI JI seatsid[%d] win %d seatsid[%d] lose\n", i, seats[i].ji_pai[j].value, k);
+                    mjlog.debug("SHU ZI JI seatsid[%d] win %d seatsid[%d] lose\n", i, seats[i].ji_pai[j].value % 16, k);
                     break;
                 case JIAN_QI_WA:
                     seats[i].score_from_players_detail[k][JIAN_QI_WA_TYPE] += JIAN_QI_WA_BET;
@@ -5676,13 +5689,13 @@ void Table::update_account_bet()
                 { //c为1时,拿到冲锋乌骨鸡的获取给其它玩家分
                     if (c == 1)
                     {
-                        seats[i].score_from_players_detail[j][CHONG_FENG_WU_GU_JI_TYPE] = 2;
+                        seats[i].score_from_players_detail[j][CHONG_FENG_WU_GU_JI_TYPE] = 4 * (fang_8_tong + 1);
                         score_from_players_item_count[i][CHONG_FENG_WU_GU_JI_TYPE] = 1;
                         score_to_players_item_count[j][CHONG_FENG_WU_GU_JI_TYPE]++;
                     }
                     else
                     {
-                        seats[j].score_from_players_detail[i][CHONG_FENG_WU_GU_JI_TYPE] = 2;
+                        seats[j].score_from_players_detail[i][CHONG_FENG_WU_GU_JI_TYPE] = 4 * (fang_8_tong + 1);
                         score_from_players_item_count[j][CHONG_FENG_WU_GU_JI_TYPE] = 1;
                         score_to_players_item_count[i][CHONG_FENG_WU_GU_JI_TYPE]++;
                     }
@@ -5784,7 +5797,7 @@ void Table::update_account_bet()
                 }
                 if (seats[i].has_chong_feng_wu_gu_ji == 1)
                 { //c为1时,拿到冲锋乌骨鸡的获取给其它玩家分
-                    seats[j].score_from_players_detail[i][CHONG_FENG_WU_GU_JI_TYPE] = 2;
+                    seats[j].score_from_players_detail[i][CHONG_FENG_WU_GU_JI_TYPE] = 4 * (fang_8_tong + 1);
                     score_from_players_item_count[j][CHONG_FENG_WU_GU_JI_TYPE] = 1;
                     score_to_players_item_count[i][CHONG_FENG_WU_GU_JI_TYPE]++;
                     mjlog.debug("jipai seats[%d] you chong feng wu gu ji.\n", i);
@@ -5814,7 +5827,7 @@ void Table::update_account_bet()
                 }
                 if (seats[i].has_wu_gu_ji >= 1)
                 {
-                    seats[j].score_from_players_detail[i][WU_GU_JI_TYPE] += seats[i].has_wu_gu_ji;
+                    seats[j].score_from_players_detail[i][WU_GU_JI_TYPE] += (seats[i].has_wu_gu_ji * WU_GU_JI_BET);
                     score_from_players_item_count[j][WU_GU_JI_TYPE] += seats[i].has_wu_gu_ji;
                     score_to_players_item_count[i][WU_GU_JI_TYPE] += seats[i].has_wu_gu_ji;
                     mjlog.debug("jipai seats[%d] you wu gu ji cnt[%d].\n", i, seats[i].has_wu_gu_ji);

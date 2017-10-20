@@ -140,7 +140,7 @@ void TableDelegate::init_table_type(Table *table, Json::Value &val, int robot)
     {
         int has_feng = 0;
         int has_ghost = 1;
-        int horse_num = 4;
+        int horse_num = 1;
         int table_type = zjh.conf["tables"]["type"].asInt();
         int hu_pair = 1;
         int max_play_count = 8;
