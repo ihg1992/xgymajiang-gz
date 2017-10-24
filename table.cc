@@ -1142,8 +1142,7 @@ int Table::game_start()
 {
     ev_timer_stop(zjh.loop, &subs_timer);
     ts = time(NULL);
-    // Replay::init_handler();
-    replay.init(ts, tid); //记录回放
+    Replay::init_handler();
     // replay.append_record(config_of_replay);
     state = BETTING;
     mjlog.debug("game start.\n");
@@ -1168,6 +1167,7 @@ int Table::game_start()
     deck.shuffle(tid);
     //deck.debug();
     
+    replay.init(ts, ttid); //记录回放
 
     if (round_count == 0)
     {
@@ -2292,7 +2292,7 @@ int Table::game_end(int flag)
     if (save_flag == 1)
     {
         //replay.save(ts, ttid);
-		//replay.async_save(ts, ttid);
+		replay.async_save(ts, ttid);
     }
 
     struct timeval btime, etime;
