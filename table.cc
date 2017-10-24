@@ -5411,7 +5411,7 @@ void Table::update_account_bet()
             }
 
             //查看打出去的牌
-            if (is_man_tang_ji == 1 || ji_pai[i].value == 1 || ji_pai[i].value == 2 * 16 + 8)
+            if (is_man_tang_ji == 1 || ji_pai[i].value == 1 || (ji_pai[i].value == 2 * 16 + 8 && wu_gu_ji == 1))
             {
                 std::list<Card>::iterator ite = seats[j].hole_cards.discard_cards.begin();
                 for (; ite != seats[j].hole_cards.discard_cards.end(); ++ite)
