@@ -2056,7 +2056,10 @@ int Table::game_end(int flag)
     packet.val["gang_shang_hua_flag"] = gang_shang_hua_flag; //杠上花
     packet.val["gang_shang_pao"] = gang_shang_pao;           //杠上炮
     packet.val["dead_double"] = dead_double;
-
+    for (unsigned int i = 0; i < deck.cards.size(); i++)
+	{
+		packet.val["lave_cards"].append(deck.cards[i].value);
+    }
     int j = 0;
     for (int i = 0; i < seat_max; i++)
     {
